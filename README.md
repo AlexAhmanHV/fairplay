@@ -1,50 +1,84 @@
-# Welcome to your Expo app 👋
+# 🏌️ FairPlay Golf
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**FairPlay** is a mobile app built with **React Native** and **Expo**, designed to help golfers easily record their rounds and track their performance over time.  
+The app focuses on simplicity, clarity, and a calm visual style — ideal for both beginners and casual players.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 Features (in progress)
 
-   ```bash
-   npm install
-   ```
+✅ Clean start screen with intuitive navigation  
+⬜ Record and manage golf rounds  
+⬜ View personal stats and history  
+⬜ Local data storage with SQLite  
+⬜ Optional future cloud sync via Firebase  
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## ⚙️ Tech Stack
 
-In the output, you'll find options to open the app in a
+- **React Native (Expo)** – cross-platform mobile development  
+- **React Navigation** – smooth screen transitions  
+- **SQLite** – local data storage  
+- **Material Design-inspired UI** – clean, modern, and easy to read  
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 🧱 Project Structure
 
 ```bash
-npm run reset-project
-```
+fairplay/
+├── App.js
+├── screens/
+│   ├── HomeScreen.js
+├── components/
+├── db/
+├── data/
+├── assets/
+└── package.json
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Installation & Running the App
 
-## Learn more
+git clone https://github.com/<YOUR-USERNAME>/fairplay.git
+cd fairplay
 
-To learn more about developing your project with Expo, look at the following resources:
+Install dependencies
+npm install
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Start the development server
+npx expo start
 
-## Join the community
+Run the app
+Scan the QR code with the Expo Go app (available on iOS and Android).
+Or press “i” to launch the iOS simulator / “a” for Android.
 
-Join our community of developers creating universal apps.
+Personas
+Linnea
+An enthusiastic amateur golfer who plays 1–2 times a week.
+She values a clean interface, minimal steps per action, and dislikes unnecessary complexity.
+For her, the app should feel quick, reliable, and supportive during her rounds.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Johan
+A casual golfer who plays mostly with friends or colleagues.
+He’s technically competent but impatient — if the app feels slow or cluttered, he’ll stop using it.
+He needs a fast, straightforward scorekeeper with clear feedback and weather context.
+
+Planned features:
+“Start new round” flow with score and hole tracking
+ Statistics and progress overview
+ Settings screen (theme, units, preferences)
+ Optional cloud sync (Firebase)
+ Export round history
+
+Design vision:
+The app follows a light version of Material Design, emphasizing readability and smooth user flow.
+Accent colors are green and white — inspired by the calm and clarity of a golf course.
+
+License:
+Free to use, modify and distrubute with attribution.
+
+This project is developed as part of an educational assignment focusing on usability, clean architecture, and step-by-step learning.
+
+
+
+
