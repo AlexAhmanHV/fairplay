@@ -8,7 +8,10 @@ import { initDb, saveRound } from "../db/rounds";
 const RoundContext = createContext(null);
 
 export function RoundProvider({ children }) {
-  // current: { date, holesCount, holes:[{number, strokes, putts?, fairwayHit?, greenInReg?}], currentIndex, course?, mode?, startedAt? }
+  // current: {
+  //   date, holesCount, holes:[{number, strokes, putts?, fairwayHit?, greenInReg?, penalties?}],
+  //   currentIndex, course?, mode?, startedAt?, weather?
+  // }
   const [current, setCurrent] = useState(null);
 
   useEffect(() => {
@@ -20,7 +23,7 @@ export function RoundProvider({ children }) {
       /**
        * Start a new round.
        * @param {number} holesCount - 9 or 18 (default 9)
-       * @param {object} extras - optional metadata (e.g. { course, mode: "stats"|"simple", startedAt })
+       * @param {object} extras - optional metadata (e.g. { course, mode: "stats"|"simple", startedAt, weather })
        */
       startRound: (holesCount = 9, extras = {}) => {
         const today = new Date().toISOString().slice(0, 10);
@@ -30,7 +33,7 @@ export function RoundProvider({ children }) {
           number: i + 1,
           strokes: 0,
           ...(withStats
-            ? { putts: 0, fairwayHit: false, greenInReg: false }
+            ? { putts: 0, fairwayHit: false, greenInReg: false, penalties: 0 }
             : {}),
         }));
 
@@ -39,10 +42,11 @@ export function RoundProvider({ children }) {
           holesCount,
           holes,
           currentIndex: 0,
-          ...extras, // course, mode, startedAt
+          ...extras, // course, mode, startedAt, weather
         });
       },
 
+      // --- scoring ---
       setStrokeForHole: (holeNumber, strokes) => {
         setCurrent((c) => {
           if (!c) return c;
@@ -53,7 +57,7 @@ export function RoundProvider({ children }) {
         });
       },
 
-      // Stats helpers
+      // --- stats helpers ---
       setPuttsForHole: (holeNumber, putts) =>
         setCurrent((c) => {
           if (!c) return c;
@@ -81,6 +85,16 @@ export function RoundProvider({ children }) {
           return { ...c, holes };
         }),
 
+      setPenaltiesForHole: (holeNumber, penalties) =>
+        setCurrent((c) => {
+          if (!c) return c;
+          const holes = c.holes.map((h) =>
+            h.number === holeNumber ? { ...h, penalties: Math.max(0, penalties) } : h
+          );
+          return { ...c, holes };
+        }),
+
+      // --- navigation between holes ---
       nextHole: () =>
         setCurrent((c) =>
           !c ? c : { ...c, currentIndex: Math.min(c.holesCount - 1, c.currentIndex + 1) }
@@ -91,13 +105,15 @@ export function RoundProvider({ children }) {
           !c ? c : { ...c, currentIndex: Math.max(0, c.currentIndex - 1) }
         ),
 
+      // --- finalize/save ---
       endRound: async () => {
         if (!current) return null;
         const payload = {
           date: current.date,
           holesCount: current.holesCount,
-          holes: current.holes,            // strokes + ev. stats
-          course: current.course ?? null,   // sparas i rounds
+          holes: current.holes,             // strokes + stats + penalties
+          course: current.course ?? null,
+          weather: current.weather ?? null,  // saved in rounds table if present
         };
         const saved = await saveRound(payload);
         setCurrent(null);

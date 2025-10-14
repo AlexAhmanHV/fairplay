@@ -1,25 +1,37 @@
 // screens/RoundScreen.js
+import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect } from "react";
-import { Alert, Pressable, Text, View } from "react-native";
-import HoleHeader from "../components/HoleHeader";
-import ScoreStepper from "../components/ScoreStepper";
-import { useRound } from "../context/RoundContext";
+import { Alert, Image, Switch, Text, View } from "react-native"; // ⬅️ Image
+import { SafeAreaView } from "react-native-safe-area-context";
 
-function ToggleChip({ label, active, onPress }) {
+import FadeInSlide from "../components/FadeInSlide";
+import FormCard from "../components/FormCard";
+import NavButton from "../components/NavButton";
+import PrimaryButton from "../components/PrimaryButton";
+import ScoreStepper from "../components/ScoreStepper";
+import ScreenGradient from "../components/ScreenGradient";
+
+import { useRound } from "../context/RoundContext";
+import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
+
+// Gemensam rad: samma höjd för ALLA kort (matchar kompakta shots/putts)
+const ROW_H = 44;
+function RowUniform({ children, style }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: active ? "#3C9A5B" : "#D9D9D9",
-        backgroundColor: active ? "#EAF7EF" : "#FFFFFF",
-      }}
+    <View
+      style={[
+        {
+          height: ROW_H,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        },
+        style,
+      ]}
     >
-      <Text style={{ color: active ? "#236B3C" : "#333" }}>{label}</Text>
-    </Pressable>
+      {children}
+    </View>
   );
 }
 
@@ -29,16 +41,15 @@ export default function RoundScreen({ route, navigation }) {
     current,
     startRound,
     setStrokeForHole,
-    nextHole,
-    prevHole,
-    endRound,
-    // nya setters för stats:
     setPuttsForHole,
     toggleFairwayHit,
     toggleGreenInReg,
+    setPenaltiesForHole,
+    nextHole,
+    prevHole,
+    endRound,
   } = useRound();
 
-  // Starta runda om ingen pågår (t.ex. deeplink)
   useEffect(() => {
     if (!current) startRound(holesCount);
   }, [current, holesCount, startRound]);
@@ -46,7 +57,7 @@ export default function RoundScreen({ route, navigation }) {
   if (!current) return null;
 
   const hole = current.holes[current.currentIndex];
-  const total = current.holes.reduce((s, h) => s + (h.strokes ?? 0), 0);
+  const totalStrokes = current.holes.reduce((s, h) => s + (h.strokes ?? 0), 0);
   const isStats = current.mode === "stats";
 
   const handleEnd = useCallback(() => {
@@ -66,111 +77,224 @@ export default function RoundScreen({ route, navigation }) {
     ]);
   }, [endRound, navigation]);
 
-  const onNext =
-    current.currentIndex < current.holesCount - 1 ? nextHole : handleEnd;
+  const onNext = current.currentIndex < current.holesCount - 1 ? nextHole : handleEnd;
+
+  const trackColor = { false: "#D9D9D9", true: GREEN_PRIMARY };
+  const thumbColor = "#FFFFFF";
+  const switchStyle = { transform: [{ scale: 0.9 }] };
 
   return (
-    <View style={{ flex: 1, padding: 20, gap: 20 }}>
-      <HoleHeader current={hole.number} total={current.holesCount} />
-
-      {/* Slag */}
-      <View style={{ alignItems: "center", marginTop: 8 }}>
-        <Text style={{ marginBottom: 8, color: "#3C6E47" }}>
-          Slag på hål {hole.number}
-        </Text>
-        <ScoreStepper
-          value={hole.strokes}
-          onChange={(v) => setStrokeForHole(hole.number, v)}
-        />
-      </View>
-
-      {/* Statistik (visas bara i stats-läge) */}
-      {isStats && (
-        <View style={{ gap: 16, marginTop: 6 }}>
-          {/* Putts */}
-          <View style={{ alignItems: "center" }}>
-            <Text style={{ marginBottom: 8, color: "#3C6E47" }}>
-              Putts på hål {hole.number}
-            </Text>
-            <ScoreStepper
-              value={hole.putts ?? 0}
-              onChange={(v) => setPuttsForHole(hole.number, v)}
+    <ScreenGradient>
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* Top info – kompakt logga + text */}
+        <FadeInSlide delay={40} fromY={-6}>
+          <View style={{ paddingHorizontal: 20, alignItems: "center", paddingTop: 8 }}>
+            {/* Mini-logo (byt till din korrekta asset-path om annan) */}
+            <Image
+              source={require("../assets/logo.png")}
+              style={{
+                width: 32,
+                height: 32,
+                resizeMode: "contain",
+                marginBottom: 6,
+                opacity: 0.95,
+              }}
             />
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "900",
+                color: GREEN_TEXT_DARK,
+                textAlign: "center",
+              }}
+              numberOfLines={2}
+            >
+              {current.course || "—"}
+            </Text>
+            <Text
+              style={{
+                color: "#5E6D63",
+                marginTop: 2,
+                textAlign: "center",
+                fontSize: 14,
+                fontWeight: "600",
+              }}
+            >
+              {current.date}
+            </Text>
+
+            <Text
+              style={{
+                textAlign: "center",
+                marginTop: 8,
+                fontSize: 22,
+                fontWeight: "800",
+                color: GREEN_PRIMARY,
+              }}
+            >
+              Hole {hole.number} of {current.holesCount}
+            </Text>
+          </View>
+        </FadeInSlide>
+
+        {/* Content cards */}
+        <View style={{ paddingHorizontal: 20, marginTop: 16, gap: 10 }}>
+          {/* Number of shots */}
+          <FadeInSlide delay={100} fromY={8}>
+            <FormCard>
+              <RowUniform>
+                <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
+                  Number of shots
+                </Text>
+                <ScoreStepper
+                  size="sm"
+                  value={hole.strokes}
+                  onChange={(v) => setStrokeForHole(hole.number, v)}
+                />
+              </RowUniform>
+            </FormCard>
+          </FadeInSlide>
+
+          {isStats && (
+            <>
+              {/* Fairway in regulation */}
+              <FadeInSlide delay={140} fromY={8}>
+                <FormCard>
+                  <RowUniform>
+                    <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
+                      Fairway in regulation
+                    </Text>
+                    <Switch
+                      style={switchStyle}
+                      value={!!hole.fairwayHit}
+                      onValueChange={() => toggleFairwayHit(hole.number)}
+                      trackColor={trackColor}
+                      thumbColor={thumbColor}
+                    />
+                  </RowUniform>
+                </FormCard>
+              </FadeInSlide>
+
+              {/* Green in regulation */}
+              <FadeInSlide delay={180} fromY={8}>
+                <FormCard>
+                  <RowUniform>
+                    <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
+                      Green in regulation
+                    </Text>
+                    <Switch
+                      style={switchStyle}
+                      value={!!hole.greenInReg}
+                      onValueChange={() => toggleGreenInReg(hole.number)}
+                      trackColor={trackColor}
+                      thumbColor={thumbColor}
+                    />
+                  </RowUniform>
+                </FormCard>
+              </FadeInSlide>
+
+              {/* Putts */}
+              <FadeInSlide delay={220} fromY={8}>
+                <FormCard>
+                  <RowUniform>
+                    <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
+                      Putts
+                    </Text>
+                    <ScoreStepper
+                      size="sm"
+                      value={hole.putts ?? 0}
+                      onChange={(v) => setPuttsForHole(hole.number, v)}
+                    />
+                  </RowUniform>
+                </FormCard>
+              </FadeInSlide>
+
+              {/* Penalty strokes */}
+              <FadeInSlide delay={260} fromY={8}>
+                <FormCard>
+                  <RowUniform>
+                    <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
+                      Penalty strokes
+                    </Text>
+                    <ScoreStepper
+                      size="sm"
+                      value={hole.penalties ?? 0}
+                      onChange={(v) =>
+                        typeof setPenaltiesForHole === "function" &&
+                        setPenaltiesForHole(hole.number, v)
+                      }
+                    />
+                  </RowUniform>
+                </FormCard>
+              </FadeInSlide>
+            </>
+          )}
+        </View>
+
+        {/* Navigation row – lika breda, båda aktiva = gröna; på hål 1 är Previous disabled/outline */}
+        <View
+          style={{
+            paddingHorizontal: 20,
+            flexDirection: "row",
+            gap: 12,
+            marginTop: "auto",
+            marginBottom: 8,
+          }}
+        >
+          {/* Vänster halva */}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <FadeInSlide delay={300} fromY={10}>
+              <NavButton
+                title="Previous hole"
+                onPress={prevHole}
+                variant={current.currentIndex === 0 ? "secondary" : "primary"}
+                disabled={current.currentIndex === 0}
+                iconPosition="left"
+                icon={
+                  <Ionicons
+                    name="chevron-back"
+                    size={18}
+                    color={current.currentIndex === 0 ? GREEN_TEXT_DARK : "#FFFFFF"}
+                  />
+                }
+              />
+            </FadeInSlide>
           </View>
 
-          {/* Fairway & GIR */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: 10,
-            }}
-          >
-            <ToggleChip
-              label="Fairway hit"
-              active={!!hole.fairwayHit}
-              onPress={() => toggleFairwayHit(hole.number)}
-            />
-            <ToggleChip
-              label="Green in reg."
-              active={!!hole.greenInReg}
-              onPress={() => toggleGreenInReg(hole.number)}
-            />
+          {/* Höger halva */}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <FadeInSlide delay={320} fromY={10}>
+              <NavButton
+                title={
+                  current.currentIndex < current.holesCount - 1
+                    ? "Next hole"
+                    : "Finish"
+                }
+                onPress={onNext}
+                variant="primary"
+                iconPosition="right"
+                icon={<Ionicons name="chevron-forward" size={18} color="#FFFFFF" />}
+              />
+            </FadeInSlide>
           </View>
         </View>
-      )}
 
-      {/* Navigering */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          marginTop: "auto",
-          gap: 12,
-        }}
-      >
-        <Pressable
-          disabled={current.currentIndex === 0}
-          onPress={prevHole}
-          style={{
-            flex: 1,
-            padding: 16,
-            borderRadius: 14,
-            backgroundColor: "#F1F1F1",
-            alignItems: "center",
-            opacity: current.currentIndex === 0 ? 0.6 : 1,
-          }}
-        >
-          <Text>Föregående</Text>
-        </Pressable>
+        {/* Finish now + running total */}
+        <View style={{ paddingHorizontal: 20 }}>
+          <FadeInSlide delay={340} fromY={10}>
+            <PrimaryButton
+              title="Finish round now"
+              onPress={handleEnd}
+              variant="primary"
+              icon={<Ionicons name="checkmark" size={20} color={GREEN_TEXT_DARK} />}
+            />
+          </FadeInSlide>
 
-        <Pressable
-          onPress={onNext}
-          style={{
-            flex: 1,
-            padding: 16,
-            borderRadius: 14,
-            backgroundColor: "#3C9A5B",
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "white", fontWeight: "600" }}>
-            {current.currentIndex < current.holesCount - 1
-              ? "Nästa hål"
-              : "Avsluta"}
+          <Text style={{ textAlign: "center", color: "#6B6B6B", marginTop: 8 }}>
+            Running total: {totalStrokes} shots
           </Text>
-        </Pressable>
-      </View>
-
-      {/* Total + avsluta nu */}
-      <View style={{ alignItems: "center" }}>
-        <Text style={{ color: "#6B6B6B" }}>Löpande total: {total} slag</Text>
-        <Pressable onPress={handleEnd} style={{ marginTop: 8 }}>
-          <Text style={{ textDecorationLine: "underline", color: "#3C6E47" }}>
-            Avsluta runda nu
-          </Text>
-        </Pressable>
-      </View>
-    </View>
+        </View>
+      </SafeAreaView>
+    </ScreenGradient>
   );
 }

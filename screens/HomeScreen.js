@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useCallback, useEffect, useState } from "react";
 import {
   Dimensions,
   FlatList,
   Image,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -14,17 +16,33 @@ import FadeInSlide from "../components/FadeInSlide";
 import PrimaryButton from "../components/PrimaryButton";
 import RoundCard from "../components/RoundCard";
 import ScreenGradient from "../components/ScreenGradient";
+import { getRounds } from "../db/rounds";
 import { GREEN_TEXT_DARK } from "../theme/colors";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-  const recentRounds = [
-    { id: "1", course: "Ullna GC", date: "2025-09-28" },
-    { id: "2", course: "Visby GK", date: "2025-09-21" },
-    { id: "3", course: "Oskarshamns GK", date: "2025-09-18" },
-  ];
-
   const screenWidth = Dimensions.get("window").width;
+
+  const [recentRounds, setRecentRounds] = useState([]);
+
+  const load = useCallback(async () => {
+    try {
+      // getRounds returnerar ORDER BY date DESC – ta topp 3
+      const rows = await getRounds();
+      const top3 = (rows || []).slice(0, 3);
+      setRecentRounds(top3);
+    } catch (e) {
+      console.warn("Failed to load recent rounds:", e);
+      setRecentRounds([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Ladda initialt + när man kommer tillbaka till hem
+    const unsub = navigation.addListener("focus", load);
+    load();
+    return unsub;
+  }, [navigation, load]);
 
   return (
     <ScreenGradient>
@@ -48,15 +66,19 @@ export default function HomeScreen() {
           </FadeInSlide>
         </View>
 
-        {/* NEDRE SEKTION */}
+        {/* NEDRE SEKTION – senaste rundor (max 3) */}
         <FadeInSlide delay={240} fromY={10} style={{ marginBottom: 70 }}>
           <FlatList
             data={recentRounds}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => String(item.id)}
             scrollEnabled={false}
             ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
             renderItem={({ item }) => (
-              <RoundCard course={item.course} date={item.date} />
+              <Pressable
+                onPress={() => navigation.navigate("RoundSummary", { id: item.id })}
+              >
+                <RoundCard course={item.course || "—"} date={item.date} />
+              </Pressable>
             )}
             ListFooterComponent={<View style={{ height: 14 }} />}
             ListEmptyComponent={

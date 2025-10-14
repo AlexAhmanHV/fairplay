@@ -1,16 +1,80 @@
-import { Pressable, Text, View } from 'react-native';
+// components/ScoreStepper.js
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, Text, View } from "react-native";
 
+export default function ScoreStepper({
+  value = 0,
+  onChange,
+  min = 0,
+  max = 99,
+  step = 1,
+  size = "md", // "sm" | "md"
+}) {
+  const isSm = size === "sm";
 
-export default function ScoreStepper({ value, onChange }) {
-return (
-<View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-<Pressable onPress={() => onChange(Math.max(0, value - 1))} style={{ padding: 16, borderRadius: 12, backgroundColor: '#EAF7EF' }}>
-<Text style={{ fontSize: 24 }}>−</Text>
-</Pressable>
-<Text style={{ fontSize: 40, fontWeight: '700' }}>{value}</Text>
-<Pressable onPress={() => onChange(value + 1)} style={{ padding: 16, borderRadius: 12, backgroundColor: '#EAF7EF' }}>
-<Text style={{ fontSize: 24 }}>＋</Text>
-</Pressable>
-</View>
-);
+  const btnSize = isSm ? 34 : 44; // yttre knapp
+  const iconSize = isSm ? 16 : 22; // ikonstorlek
+  const fontSize = isSm ? 18 : 22; // siffror
+  const gap = isSm ? 10 : 14;
+
+  const dec = () => onChange?.(Math.max(min, (value ?? 0) - step));
+  const inc = () => onChange?.(Math.min(max, (value ?? 0) + step));
+
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap,
+      }}
+    >
+      <Pressable
+        onPress={dec}
+        hitSlop={10}
+        style={{
+          width: btnSize,
+          height: btnSize,
+          borderRadius: 999,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#F4F4F4",
+          borderWidth: 1,
+          borderColor: "#E6E6E6",
+        }}
+        accessibilityLabel="Decrease"
+      >
+        <Ionicons name="remove" size={iconSize} color="#1f2937" />
+      </Pressable>
+
+      <Text
+        style={{
+          minWidth: isSm ? 28 : 36,
+          textAlign: "center",
+          fontSize,
+          fontWeight: "800",
+          color: "#1f2937",
+        }}
+      >
+        {value ?? 0}
+      </Text>
+
+      <Pressable
+        onPress={inc}
+        hitSlop={10}
+        style={{
+          width: btnSize,
+          height: btnSize,
+          borderRadius: 999,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#F4F4F4",
+          borderWidth: 1,
+          borderColor: "#E6E6E6",
+        }}
+        accessibilityLabel="Increase"
+      >
+        <Ionicons name="add" size={iconSize} color="#1f2937" />
+      </Pressable>
+    </View>
+  );
 }

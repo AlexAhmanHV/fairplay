@@ -8,9 +8,14 @@
     "scheme": "fairplay",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "FairPlay använder din plats för att hämta aktuellt väder när du startar en runda."
+      }
     },
+
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -19,12 +24,18 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
+
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       [
         "expo-splash-screen",
@@ -38,8 +49,10 @@
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-location"
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
