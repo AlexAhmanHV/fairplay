@@ -1,62 +1,38 @@
+// screens/StartRoundScreen.js
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
 import { useMemo, useRef, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View, } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-
 import FadeInSlide from "../components/FadeInSlide";
 import FormCard from "../components/FormCard";
 import LabeledSwitch from "../components/LabeledSwitch";
-import LogoHeader from "../components/LogoHeader";
+import Logo from "../components/Logo";
 import PrimaryButton from "../components/PrimaryButton";
 import ScreenGradient from "../components/ScreenGradient";
 import TogglePill from "../components/TogglePill";
-import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
-
 import { useRound } from "../context/RoundContext";
-
-// ✅ väder + plats
-import * as Location from "expo-location";
 import { fetchCurrentWeather } from "../services/weather";
+import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
 export default function StartRoundScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-
   const [course, setCourse] = useState("");
-  const [holes, setHoles] = useState(18); // förvalt 18 hål
+  const [holes, setHoles] = useState(18);
   const [withStats, setWithStats] = useState(true);
   const [includeWeather, setIncludeWeather] = useState(true);
-
-  // validation states
   const [touchedCourse, setTouchedCourse] = useState(false);
   const [attemptedStart, setAttemptedStart] = useState(false);
-
   const scrollRef = useRef(null);
   const courseInputRef = useRef(null);
-
   const { startRound } = useRound();
-
   const courseEmpty = course.trim().length === 0;
   const showCourseError = (touchedCourse || attemptedStart) && courseEmpty;
-
-  const canStart = useMemo(
-    () => !courseEmpty && !!holes,
-    [courseEmpty, holes]
-  );
-
+  const canStart = useMemo(() => !courseEmpty && !!holes, [courseEmpty, holes]);
   const handleStart = async () => {
     if (!canStart) {
-      // visa orsaken och fokusera fältet
       setAttemptedStart(true);
       setTouchedCourse(true);
-      // scroll + focus för bättre UX
       try {
         scrollRef.current?.scrollTo({ y: 0, animated: true });
         courseInputRef.current?.focus();
@@ -65,7 +41,6 @@ export default function StartRoundScreen({ navigation }) {
     }
 
     let weather = null;
-
     if (includeWeather) {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -75,11 +50,9 @@ export default function StartRoundScreen({ navigation }) {
           });
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-
           const w = await fetchCurrentWeather(lat, lon);
           weather = { ...w, lat, lon };
         } else {
-          // Ingen behörighet – fortsätt utan väder
           console.warn("Location permission denied; continuing without weather.");
         }
       } catch (e) {
@@ -87,15 +60,13 @@ export default function StartRoundScreen({ navigation }) {
       }
     }
 
-    // Initiera rundan i contextet
     startRound(holes, {
       course,
       mode: withStats ? "stats" : "simple",
       startedAt: new Date().toISOString(),
-      weather, // skickas vidare till saveRound via endRound()
+      weather,
     });
 
-    // Navigera till RoundScreen
     navigation.navigate("Round", { holesCount: holes });
   };
 
@@ -105,7 +76,8 @@ export default function StartRoundScreen({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <SafeAreaView style={{ flex: 1 }}>
+        {/* Ingen top-edge → inget extra top-inset */}
+        <SafeAreaView style={{ flex: 1 }} edges={[]}>
           <ScrollView
             ref={scrollRef}
             contentContainerStyle={[
@@ -113,10 +85,12 @@ export default function StartRoundScreen({ navigation }) {
               { paddingBottom: insets.bottom + 16 },
             ]}
             keyboardShouldPersistTaps="handled"
+            contentInsetAdjustmentBehavior="never"
           >
             {/* Logga + Titel */}
             <FadeInSlide delay={0} fromY={-10}>
-              <LogoHeader title="Start a new round" />
+              <Logo height={160} maxWidthPct={0.44} style={{ marginTop: 40, marginBottom: 6 }} />
+              <Text style={styles.screenTitle}>Start a new round</Text>
             </FadeInSlide>
 
             {/* Form */}
@@ -194,15 +168,9 @@ export default function StartRoundScreen({ navigation }) {
               <PrimaryButton
                 title="Start a round"
                 onPress={handleStart}
-                icon={
-                  <Ionicons
-                    name="arrow-forward"
-                    size={22}
-                    color={GREEN_TEXT_DARK}
-                  />
-                }
+                icon={<Ionicons name="arrow-forward" size={22} color={GREEN_TEXT_DARK} />}
                 variant="primary"
-                styleOverride={!canStart ? styles.disabledBtn : undefined}
+                style={!canStart ? styles.disabledBtn : undefined}
                 accessibilityLabel={
                   canStart
                     ? "Start a round"
@@ -226,8 +194,16 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 40,
-    gap: 20,
+    paddingTop: 0,    // tryck upp allt
+    gap: 16,
+  },
+  screenTitle: {
+    color: GREEN_TEXT_DARK,
+    fontWeight: "800",
+    fontSize: 22,
+    marginTop: 0,
+    marginBottom: 2,
+    textAlign: "center",
   },
   form: { gap: 16 },
   label: { color: GREEN_TEXT_DARK, fontWeight: "700", fontSize: 14 },

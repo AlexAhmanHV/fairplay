@@ -1,37 +1,26 @@
 // screens/RoundScreen.js
 import { Ionicons } from "@expo/vector-icons";
-import { useCallback, useEffect } from "react";
-import { Alert, Image, Switch, Text, View } from "react-native"; // ⬅️ Image
+import { useCallback, useEffect, useMemo } from "react";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import FadeInSlide from "../components/FadeInSlide";
 import FormCard from "../components/FormCard";
+import LabeledSwitch from "../components/LabeledSwitch";
+import Logo from "../components/Logo";
 import NavButton from "../components/NavButton";
 import PrimaryButton from "../components/PrimaryButton";
 import ScoreStepper from "../components/ScoreStepper";
 import ScreenGradient from "../components/ScreenGradient";
-
 import { useRound } from "../context/RoundContext";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
-// Gemensam rad: samma höjd för ALLA kort (matchar kompakta shots/putts)
-const ROW_H = 44;
+// Uniform row height for compact cards (shots/putts/switch rows).
+const ROW_HEIGHT = 44;
+
+/** Small presentational helper to keep rows visually consistent. */
 function RowUniform({ children, style }) {
   return (
-    <View
-      style={[
-        {
-          height: ROW_H,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        },
-        style,
-      ]}
-    >
-      {children}
-    </View>
+    <View style={[styles.rowUniform, style]}>{children}</View>
   );
 }
 
@@ -50,102 +39,99 @@ export default function RoundScreen({ route, navigation }) {
     endRound,
   } = useRound();
 
+  // Start a round if none exists (e.g., deep-link or cold start).
   useEffect(() => {
     if (!current) startRound(holesCount);
   }, [current, holesCount, startRound]);
 
-  if (!current) return null;
+  // Loading guard while the round is being initialized.
+  if (!current) {
+    return (
+      <ScreenGradient>
+        <SafeAreaView style={styles.centerFill}>
+          <ActivityIndicator size="small" color={GREEN_PRIMARY} />
+          <Text style={styles.loadingText}>Preparing round…</Text>
+        </SafeAreaView>
+      </ScreenGradient>
+    );
+  }
 
-  const hole = current.holes[current.currentIndex];
-  const totalStrokes = current.holes.reduce((s, h) => s + (h.strokes ?? 0), 0);
-  const isStats = current.mode === "stats";
+  const hole = current?.holes?.[current.currentIndex];
+  // Defensive guard: if for some reason the hole is missing, show a safe fallback.
+  if (!hole) {
+    return (
+      <ScreenGradient>
+        <SafeAreaView style={styles.centerFill}>
+          <Text style={styles.errorText}>Could not load the current hole.</Text>
+          <PrimaryButton
+            title="Back to the landing page"
+            variant="primary"
+            onPress={() => navigation.navigate("Home")}
+            icon={<Ionicons name="home" size={18} color={GREEN_TEXT_DARK} />}
+            style={{ marginTop: 10 }}
+          />
+        </SafeAreaView>
+      </ScreenGradient>
+    );
+  }
 
-  const handleEnd = useCallback(() => {
-    Alert.alert("Avsluta runda", "Vill du spara rundan och avsluta?", [
-      { text: "Nej" },
+  const isStatsMode = current.mode === "stats";
+  const isLastHole = current.currentIndex >= current.holesCount - 1;
+
+  const totalStrokes = useMemo(
+    () => current.holes.reduce((sum, h) => sum + (h.strokes ?? 0), 0),
+    [current.holes]
+  );
+
+  /** Finish flow with confirmation and persistence error handling. */
+  const handleFinishRound = useCallback(() => {
+    Alert.alert("Finish round", "Do you want to save and finish this round?", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: "Ja, spara",
+        text: "Save & finish",
+        style: "default",
         onPress: async () => {
           try {
             const saved = await endRound();
             navigation.replace("RoundSummary", { id: saved.id });
           } catch (e) {
-            Alert.alert("Fel vid sparning", e.message);
+            const msg = e?.message || "Something went wrong while saving the round.";
+            Alert.alert("Saving failed", msg);
           }
         },
       },
     ]);
   }, [endRound, navigation]);
 
-  const onNext = current.currentIndex < current.holesCount - 1 ? nextHole : handleEnd;
+  const handleNext = isLastHole ? handleFinishRound : nextHole;
 
-  const trackColor = { false: "#D9D9D9", true: GREEN_PRIMARY };
-  const thumbColor = "#FFFFFF";
-  const switchStyle = { transform: [{ scale: 0.9 }] };
+  // Switch styling shared config
+  const switchTrackColor = { false: "#D9D9D9", true: GREEN_PRIMARY };
+  const switchThumbColor = "#FFFFFF";
 
   return (
     <ScreenGradient>
-      <SafeAreaView style={{ flex: 1 }}>
-        {/* Top info – kompakt logga + text */}
+      <SafeAreaView style={styles.screen}>
         <FadeInSlide delay={40} fromY={-6}>
-          <View style={{ paddingHorizontal: 20, alignItems: "center", paddingTop: 8 }}>
-            {/* Mini-logo (byt till din korrekta asset-path om annan) */}
-            <Image
-              source={require("../assets/logo.png")}
-              style={{
-                width: 32,
-                height: 32,
-                resizeMode: "contain",
-                marginBottom: 6,
-                opacity: 0.95,
-              }}
-            />
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "900",
-                color: GREEN_TEXT_DARK,
-                textAlign: "center",
-              }}
-              numberOfLines={2}
-            >
+          <View style={styles.header}>
+            <Logo height={28} maxWidthPct={0.22} style={styles.headerLogo} />
+            <Text style={styles.course} numberOfLines={2}>
               {current.course || "—"}
             </Text>
-            <Text
-              style={{
-                color: "#5E6D63",
-                marginTop: 2,
-                textAlign: "center",
-                fontSize: 14,
-                fontWeight: "600",
-              }}
-            >
-              {current.date}
-            </Text>
-
-            <Text
-              style={{
-                textAlign: "center",
-                marginTop: 8,
-                fontSize: 22,
-                fontWeight: "800",
-                color: GREEN_PRIMARY,
-              }}
-            >
+            <Text style={styles.dateText}>{current.date}</Text>
+            <Text style={styles.holeProgress}>
               Hole {hole.number} of {current.holesCount}
             </Text>
           </View>
         </FadeInSlide>
 
         {/* Content cards */}
-        <View style={{ paddingHorizontal: 20, marginTop: 16, gap: 10 }}>
+        <View style={styles.cards}>
           {/* Number of shots */}
           <FadeInSlide delay={100} fromY={8}>
             <FormCard>
               <RowUniform>
-                <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
-                  Number of shots
-                </Text>
+                <Text style={styles.rowLabel}>Number of shots</Text>
                 <ScoreStepper
                   size="sm"
                   value={hole.strokes}
@@ -155,51 +141,34 @@ export default function RoundScreen({ route, navigation }) {
             </FormCard>
           </FadeInSlide>
 
-          {isStats && (
+          {isStatsMode && (
             <>
-              {/* Fairway in regulation */}
-              <FadeInSlide delay={140} fromY={8}>
-                <FormCard>
-                  <RowUniform>
-                    <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
-                      Fairway in regulation
-                    </Text>
-                    <Switch
-                      style={switchStyle}
-                      value={!!hole.fairwayHit}
-                      onValueChange={() => toggleFairwayHit(hole.number)}
-                      trackColor={trackColor}
-                      thumbColor={thumbColor}
-                    />
-                  </RowUniform>
-                </FormCard>
-              </FadeInSlide>
+{/* Fairway in regulation */}
+<FadeInSlide delay={140} fromY={8}>
+  <LabeledSwitch
+    label="Fairway in regulation"
+    help="Tee shot landed on the fairway."
+    value={!!hole.fairwayHit}
+    onValueChange={() => toggleFairwayHit(hole.number)}
+  />
+</FadeInSlide>
 
-              {/* Green in regulation */}
-              <FadeInSlide delay={180} fromY={8}>
-                <FormCard>
-                  <RowUniform>
-                    <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
-                      Green in regulation
-                    </Text>
-                    <Switch
-                      style={switchStyle}
-                      value={!!hole.greenInReg}
-                      onValueChange={() => toggleGreenInReg(hole.number)}
-                      trackColor={trackColor}
-                      thumbColor={thumbColor}
-                    />
-                  </RowUniform>
-                </FormCard>
-              </FadeInSlide>
+
+{/* Green in regulation */}
+<FadeInSlide delay={180} fromY={8}>
+  <LabeledSwitch
+    label="Green in regulation"
+    help="Ball on the green with strokes ≤ par - 2."
+    value={!!hole.greenInReg}
+    onValueChange={() => toggleGreenInReg(hole.number)}
+  />
+</FadeInSlide>
 
               {/* Putts */}
               <FadeInSlide delay={220} fromY={8}>
                 <FormCard>
                   <RowUniform>
-                    <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
-                      Putts
-                    </Text>
+                    <Text style={styles.rowLabel}>Putts</Text>
                     <ScoreStepper
                       size="sm"
                       value={hole.putts ?? 0}
@@ -213,9 +182,7 @@ export default function RoundScreen({ route, navigation }) {
               <FadeInSlide delay={260} fromY={8}>
                 <FormCard>
                   <RowUniform>
-                    <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>
-                      Penalty strokes
-                    </Text>
+                    <Text style={styles.rowLabel}>Penalty strokes</Text>
                     <ScoreStepper
                       size="sm"
                       value={hole.penalties ?? 0}
@@ -231,18 +198,9 @@ export default function RoundScreen({ route, navigation }) {
           )}
         </View>
 
-        {/* Navigation row – lika breda, båda aktiva = gröna; på hål 1 är Previous disabled/outline */}
-        <View
-          style={{
-            paddingHorizontal: 20,
-            flexDirection: "row",
-            gap: 12,
-            marginTop: "auto",
-            marginBottom: 8,
-          }}
-        >
-          {/* Vänster halva */}
-          <View style={{ flex: 1, minWidth: 0 }}>
+        {/* Navigation row: previous / next(or finish) */}
+        <View style={styles.navRow}>
+          <View style={styles.navCol}>
             <FadeInSlide delay={300} fromY={10}>
               <NavButton
                 title="Previous hole"
@@ -261,16 +219,11 @@ export default function RoundScreen({ route, navigation }) {
             </FadeInSlide>
           </View>
 
-          {/* Höger halva */}
-          <View style={{ flex: 1, minWidth: 0 }}>
+          <View style={styles.navCol}>
             <FadeInSlide delay={320} fromY={10}>
               <NavButton
-                title={
-                  current.currentIndex < current.holesCount - 1
-                    ? "Next hole"
-                    : "Finish"
-                }
-                onPress={onNext}
+                title={isLastHole ? "Finish" : "Next hole"}
+                onPress={handleNext}
                 variant="primary"
                 iconPosition="right"
                 icon={<Ionicons name="chevron-forward" size={18} color="#FFFFFF" />}
@@ -280,17 +233,17 @@ export default function RoundScreen({ route, navigation }) {
         </View>
 
         {/* Finish now + running total */}
-        <View style={{ paddingHorizontal: 20 }}>
+        <View style={styles.footer}>
           <FadeInSlide delay={340} fromY={10}>
             <PrimaryButton
               title="Finish round now"
-              onPress={handleEnd}
+              onPress={handleFinishRound}
               variant="primary"
               icon={<Ionicons name="checkmark" size={20} color={GREEN_TEXT_DARK} />}
             />
           </FadeInSlide>
 
-          <Text style={{ textAlign: "center", color: "#6B6B6B", marginTop: 8 }}>
+          <Text style={styles.runningTotal}>
             Running total: {totalStrokes} shots
           </Text>
         </View>
@@ -298,3 +251,93 @@ export default function RoundScreen({ route, navigation }) {
     </ScreenGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+
+  centerFill: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 8,
+    color: "#ffffffcc",
+  },
+  errorText: {
+    color: GREEN_TEXT_DARK,
+    fontWeight: "700",
+  },
+
+  header: {
+    paddingHorizontal: 20,
+    alignItems: "center",
+    paddingTop: 8,
+  },
+  headerLogo: {
+    marginBottom: 6,
+    opacity: 0.95,
+  },
+  course: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: GREEN_TEXT_DARK,
+    textAlign: "center",
+  },
+  dateText: {
+    color: "#5E6D63",
+    marginTop: 2,
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  holeProgress: {
+    textAlign: "center",
+    marginTop: 8,
+    fontSize: 22,
+    fontWeight: "800",
+    color: GREEN_PRIMARY,
+  },
+
+  cards: {
+    paddingHorizontal: 20,
+    marginTop: 16,
+    gap: 10,
+  },
+  rowUniform: {
+    height: ROW_HEIGHT,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  rowLabel: {
+    color: GREEN_TEXT_DARK,
+    fontWeight: "700",
+  },
+  switch: {
+    transform: [{ scale: 0.9 }],
+  },
+
+  navRow: {
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    gap: 12,
+    marginTop: "auto",
+    marginBottom: 8,
+  },
+  navCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  footer: {
+    paddingHorizontal: 20,
+  },
+  runningTotal: {
+    textAlign: "center",
+    color: "#6B6B6B",
+    marginTop: 8,
+  },
+});

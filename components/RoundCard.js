@@ -3,7 +3,17 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
-export default function RoundCard({ course, date, style }) {
+/**
+ * @typedef {Object} RoundCardProps
+ * @property {string} [course]  - Banförkortning/namn
+ * @property {string} [date]    - Datumsträng
+ * @property {import('react-native').StyleProp<import('react-native').ViewStyle>} [style] - Valfri extra stil
+ */
+
+/**
+ * @param {RoundCardProps} props
+ */
+export default function RoundCard({ course = "—", date = "", style }) {
   return (
     <View style={[styles.row, style]}>
       <MaterialCommunityIcons
@@ -12,7 +22,9 @@ export default function RoundCard({ course, date, style }) {
         color={GREEN_TEXT_DARK}
         style={{ marginRight: 10 }}
       />
-      <Text style={styles.text}>{course} – {date}</Text>
+      <Text style={styles.text}>
+        {course} {date ? "– " + date : ""}
+      </Text>
     </View>
   );
 }

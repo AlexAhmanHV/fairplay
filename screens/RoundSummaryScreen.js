@@ -1,205 +1,274 @@
 // screens/RoundSummaryScreen.js
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useMemo, useState } from "react";
-import { Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import ErrorBanner from "../components/ErrorBanner";
 import FadeInSlide from "../components/FadeInSlide";
 import FormCard from "../components/FormCard";
-import LogoHeader from "../components/LogoHeader";
+import Logo from "../components/Logo";
 import PrimaryButton from "../components/PrimaryButton";
 import ScreenGradient from "../components/ScreenGradient";
-
+import StatRow from "../components/StatRow";
 import { getRoundDetails } from "../db/rounds";
-import { GREEN_TEXT_DARK } from "../theme/colors";
+import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
+import { formatWeatherLine } from "../utils/formatters";
 
 export default function RoundSummaryScreen({ route, navigation }) {
-  const { id } = route.params;
+  const { id } = route.params ?? {};
+  const insets = useSafeAreaInsets();
+
+  // UI state
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [data, setData] = useState(null);
 
-  useEffect(() => {
-    getRoundDetails(id).then(setData).catch(console.warn);
+  /** Load round details from DB with basic error handling. */
+  const loadRound = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      if (id == null) throw new Error("Missing round id.");
+      const res = await getRoundDetails(id);
+      if (!res) throw new Error("Round not found.");
+      setData(res);
+    } catch (e) {
+      console.warn("Failed to load round details:", e);
+      setLoadError("Could not load this round.");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
+  useEffect(() => {
+    loadRound();
+  }, [loadRound]);
+
+  /** Derive summary metrics from raw round data. */
   const summary = useMemo(() => {
     if (!data?.holes) return null;
-
     const holesPlayed = data.holes_count ?? data.holes.length ?? 0;
     const totalStrokes =
       data.total_strokes ?? data.holes.reduce((s, h) => s + (h.strokes ?? 0), 0);
     const totalPutts = data.holes.reduce((s, h) => s + (h.putts ?? 0), 0);
     const fairwaysHit = data.holes.reduce((s, h) => s + (h.fairwayHit ? 1 : 0), 0);
     const totalPenalties = data.holes.reduce((s, h) => s + (h.penalties ?? 0), 0);
-
-    return {
-      holesPlayed,
-      totalStrokes,
-      totalPutts,
-      fairwaysHit,
-      totalPenalties,
-    };
+    return { holesPlayed, totalStrokes, totalPutts, fairwaysHit, totalPenalties };
   }, [data]);
 
-  if (!data || !summary) return null;
-
   const hasWeather =
-    !!data.weather &&
+    !!data?.weather &&
     (data.weather.tempC != null || data.weather.desc || data.weather.windMps != null);
+  const weatherLine = hasWeather ? formatWeatherLine(data.weather) : null;
 
-  const weatherLine = hasWeather ? buildWeatherLine(data.weather) : null;
+  // Handlers
+  const handleBackHome = useCallback(() => navigation.navigate("Home"), [navigation]);
 
+  // Loading state UI
+  if (loading) {
+    return (
+      <ScreenGradient>
+        <SafeAreaView style={styles.centerFill} edges={["left", "right", "bottom"]}>
+          <ActivityIndicator size="small" color={GREEN_PRIMARY} />
+          <Text style={styles.loadingText}>Loading round…</Text>
+        </SafeAreaView>
+      </ScreenGradient>
+    );
+  }
+
+  // Error state UI
+  if (loadError || !data || !summary) {
+    return (
+      <ScreenGradient>
+        <SafeAreaView style={styles.centerFill} edges={["left", "right", "bottom"]}>
+          <Logo height={72} maxWidthPct={0.5} style={styles.errorLogo} />
+          <Text style={styles.title}>Round summary</Text>
+
+          <View style={styles.errorBannerWrap}>
+            <ErrorBanner
+              message={loadError || "Something went wrong."}
+              onRetry={loadRound}
+            />
+          </View>
+
+          <PrimaryButton
+            title="Back to the landing page"
+            variant="primary"
+            onPress={handleBackHome}
+            icon={<Ionicons name="home" size={20} color={GREEN_TEXT_DARK} />}
+            style={styles.errorCta}
+          />
+        </SafeAreaView>
+      </ScreenGradient>
+    );
+  }
+
+  // Normal UI
   return (
     <ScreenGradient>
-      <SafeAreaView style={{ flex: 1 }}>
-        {/* Header */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 24 }}>
+      {/* Keep safe area on sides/bottom, not top */}
+      <SafeAreaView style={styles.screen} edges={["left", "right", "bottom"]}>
+        <ScrollView
+          contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 16 }]}
+          contentInsetAdjustmentBehavior="never"
+        >
+
           <FadeInSlide delay={0} fromY={-10}>
-            <LogoHeader title="Round summary" />
-          </FadeInSlide>
-        </View>
-
-        {/* Intro: centrera rundnamn + datum (+ ev. väder under) */}
-        <View style={{ paddingHorizontal: 20, marginTop: 14, alignItems: "center" }}>
-          <FadeInSlide delay={80} fromY={6}>
-            <Text
-              style={{
-                fontSize: 24,
-                fontWeight: "900",
-                color: GREEN_TEXT_DARK,
-                textAlign: "center",
-              }}
-              numberOfLines={2}
-            >
-              {data.course || "—"}
-            </Text>
-
-            <Text
-              style={{
-                color: "#5E6D63",
-                marginTop: 6,
-                textAlign: "center",
-                fontSize: 14,
-                fontWeight: "600",
-              }}
-            >
-              {data.date} • {summary.holesPlayed} holes
-            </Text>
-
-            {hasWeather && (
-              <Text
-                style={{
-                  color: "#6F7C75",
-                  marginTop: 4,
-                  textAlign: "center",
-                  fontSize: 13,
-                }}
-                numberOfLines={2}
-              >
-                {weatherLine}
-              </Text>
-            )}
-          </FadeInSlide>
-        </View>
-
-        {/* Stats-kort */}
-        <View style={{ paddingHorizontal: 20, marginTop: 28, gap: 10 }}>
-          <FadeInSlide delay={120} fromY={8}>
-            <FormCard>
-              <StatRow label="Holes played" value={summary.holesPlayed} />
-            </FormCard>
-          </FadeInSlide>
-
-          <FadeInSlide delay={160} fromY={8}>
-            <FormCard>
-              <StatRow label="Total strokes" value={summary.totalStrokes} />
-            </FormCard>
-          </FadeInSlide>
-
-          <FadeInSlide delay={200} fromY={8}>
-            <FormCard>
-              <StatRow label="Putts" value={summary.totalPutts} />
-            </FormCard>
-          </FadeInSlide>
-
-          <FadeInSlide delay={240} fromY={8}>
-            <FormCard>
-              <StatRow label="Fairways hit" value={summary.fairwaysHit} />
-            </FormCard>
-          </FadeInSlide>
-
-          <FadeInSlide delay={280} fromY={8}>
-            <FormCard>
-              <StatRow label="Penalty strokes" value={summary.totalPenalties} />
-            </FormCard>
-          </FadeInSlide>
-        </View>
-
-        {/* Extra luft innan CTA */}
-        <View style={{ height: 16 }} />
-
-        {/* CTA */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
-          <FadeInSlide delay={320} fromY={10}>
-            <PrimaryButton
-              title="Back to the landing page"
-              variant="primary"
-              onPress={() => navigation.navigate("Home")}
-              icon={<Ionicons name="home" size={20} color={GREEN_TEXT_DARK} />}
+            <Logo
+              height={104}
+              maxWidthPct={0.42}
+              style={{ marginTop: Math.max(insets.top + 8, 16), marginBottom: 2 }}
             />
+            <Text style={styles.title}>Round summary</Text>
           </FadeInSlide>
-        </View>
+
+          {/* Intro */}
+          <SummaryHeader
+            delay={80}
+            course={data.course}
+            date={data.date}
+            holesPlayed={summary.holesPlayed}
+            weatherLine={weatherLine}
+          />
+
+          {/* Stats cards */}
+          <StatsCards delayStart={120} summary={summary} />
+
+          {/* CTA */}
+          <View style={styles.ctaWrap}>
+            <FadeInSlide delay={320} fromY={10}>
+              <PrimaryButton
+                title="Back to the landing page"
+                variant="primary"
+                onPress={handleBackHome}
+                icon={<Ionicons name="home" size={20} color={GREEN_TEXT_DARK} />}
+              />
+            </FadeInSlide>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </ScreenGradient>
   );
 }
 
-function StatRow({ label, value }) {
+/** Intro block with course/date/weather. */
+function SummaryHeader({ delay, course, date, holesPlayed, weatherLine }) {
   return (
-    <View
-      style={{
-        paddingVertical: 6, // slim
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}
-    >
-      <Text style={{ color: GREEN_TEXT_DARK, fontWeight: "700" }}>{label}</Text>
-      <Text
-        style={{
-          fontSize: 20, // slim
-          fontWeight: "800",
-          color: GREEN_TEXT_DARK,
-        }}
-      >
-        {value}
-      </Text>
+    <View style={styles.introWrap}>
+      <FadeInSlide delay={delay} fromY={6}>
+        <Text style={styles.course} numberOfLines={2}>
+          {course || "—"}
+        </Text>
+        <Text style={styles.meta}>
+          {date} • {holesPlayed} holes
+        </Text>
+        {weatherLine ? (
+          <Text style={styles.weather} numberOfLines={2}>
+            {weatherLine}
+          </Text>
+        ) : null}
+      </FadeInSlide>
     </View>
   );
 }
 
-// Hjälpare för en kompakt väderrad
-function buildWeatherLine(weather) {
-  const parts = [];
+/** Stats list rendered as compact cards. */
+function StatsCards({ delayStart, summary }) {
+  const items = useMemo(
+    () => [
+      { label: "Holes played", value: summary.holesPlayed, delay: delayStart },
+      { label: "Total strokes", value: summary.totalStrokes, delay: delayStart + 40 },
+      { label: "Putts", value: summary.totalPutts, delay: delayStart + 80 },
+      { label: "Fairways hit", value: summary.fairwaysHit, delay: delayStart + 120 },
+      { label: "Penalty strokes", value: summary.totalPenalties, delay: delayStart + 160 },
+    ],
+    [summary, delayStart]
+  );
 
-  if (typeof weather.tempC === "number") {
-    parts.push(`${Math.round(weather.tempC)}°C`);
-  }
-  if (weather.desc) {
-    parts.push(weather.desc);
-  }
-  if (typeof weather.windMps === "number") {
-    parts.push(`${Math.round(weather.windMps)} m/s`);
-  }
-
-  // valfritt: tid (lokal)
-  if (weather.time) {
-    try {
-      const d = new Date(weather.time);
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mm = String(d.getMinutes()).padStart(2, "0");
-      parts.push(`${hh}:${mm}`);
-    } catch {}
-  }
-
-  return parts.join(" • ");
+  return (
+    <View style={styles.statsWrap}>
+      {items.map((it) => (
+        <FadeInSlide key={it.label} delay={it.delay} fromY={8}>
+          <FormCard>
+            <StatRow label={it.label} value={it.value} />
+          </FormCard>
+        </FadeInSlide>
+      ))}
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+
+  container: {
+    flexGrow: 1,
+    paddingTop: 0,
+    gap: 10,
+  },
+
+  // Loading & error shared
+  centerFill: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 8,
+    color: "#ffffffcc",
+  },
+  errorLogo: { marginBottom: 10 },
+  errorBannerWrap: { width: "88%", marginTop: 12 },
+  errorCta: { marginTop: 6 },
+
+  // Header
+  title: {
+    textAlign: "center",
+    color: GREEN_TEXT_DARK,
+    fontWeight: "800",
+    fontSize: 20,
+    marginTop: 0,
+    marginBottom: 2,
+  },
+
+  // Intro
+  introWrap: {
+    paddingHorizontal: 20,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  course: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: GREEN_TEXT_DARK,
+    textAlign: "center",
+  },
+  meta: {
+    color: "#5E6D63",
+    marginTop: 6,
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  weather: {
+    color: "#6F7C75",
+    marginTop: 4,
+    textAlign: "center",
+    fontSize: 13,
+  },
+
+  // Stats
+  statsWrap: {
+    paddingHorizontal: 20,
+    marginTop: 24,
+    gap: 10,
+  },
+
+  // CTA
+  ctaWrap: {
+    paddingHorizontal: 20,
+    marginTop: 8,
+  },
+});

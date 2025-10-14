@@ -1,99 +1,111 @@
-import { Ionicons } from "@expo/vector-icons";
+// screens/HomeScreen.js
 import { useNavigation } from "@react-navigation/native";
-import { useCallback, useEffect, useState } from "react";
-import {
-  Dimensions,
-  FlatList,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import FadeInSlide from "../components/FadeInSlide";
-import PrimaryButton from "../components/PrimaryButton";
-import RoundCard from "../components/RoundCard";
+import ErrorBanner from "../components/ErrorBanner";
+import LogoHeader from "../components/LogoHeader";
+import RecentRoundsList from "../components/RecentRoundsList";
 import ScreenGradient from "../components/ScreenGradient";
-import { getRounds } from "../db/rounds";
-import { GREEN_TEXT_DARK } from "../theme/colors";
+import { useRecentRounds } from "../hooks/useRecentRounds";
 
+/**
+ * HomeScreen
+ * - Shows a branded header with CTA to start a new round.
+ * - Lists the 3 most recent rounds.
+ * - Handles loading and error states gracefully.
+ */
 export default function HomeScreen() {
   const navigation = useNavigation();
-  const screenWidth = Dimensions.get("window").width;
 
-  const [recentRounds, setRecentRounds] = useState([]);
+  // Error state for recent rounds load
+  const [loadError, setLoadError] = useState(null);
+  // Optional local loading indicator if the hook does not expose loading state
+  const [isLoading, setIsLoading] = useState(false);
 
-  const load = useCallback(async () => {
-    try {
-      // getRounds returnerar ORDER BY date DESC – ta topp 3
-      const rows = await getRounds();
-      const top3 = (rows || []).slice(0, 3);
-      setRecentRounds(top3);
-    } catch (e) {
-      console.warn("Failed to load recent rounds:", e);
-      setRecentRounds([]);
-    }
+  /** Called by the hook if loading recent rounds fails. */
+  const handleRoundsLoadError = useCallback((err) => {
+    console.warn("Failed to load recent rounds:", err);
+    setLoadError("Could not load recent rounds.");
   }, []);
 
+  const { rounds, load } = useRecentRounds(3, handleRoundsLoadError);
+
+  /** Load rounds on mount and whenever screen regains focus. */
   useEffect(() => {
-    // Ladda initialt + när man kommer tillbaka till hem
-    const unsub = navigation.addListener("focus", load);
-    load();
+    const run = async () => {
+      setLoadError(null);
+      setIsLoading(true);
+      try {
+        // If your hook's `load` doesn't return a promise,
+        // remove `await` and keep the spinner logic minimal.
+        await load();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const unsub = navigation.addListener("focus", run);
+    run();
     return unsub;
   }, [navigation, load]);
+
+  /** Handlers keep JSX clean and names self-explanatory. */
+  const handleStartNewRound = useCallback(
+    () => navigation.navigate("StartRound"),
+    [navigation]
+  );
+  const handleOpenRound = useCallback(
+    (id) => navigation.navigate("RoundSummary", { id }),
+    [navigation]
+  );
+  const handleShowAllRounds = useCallback(
+    () => navigation.navigate("PreviousRounds"),
+    [navigation]
+  );
+  const handleRetry = useCallback(async () => {
+    setLoadError(null);
+    setIsLoading(true);
+    try {
+      await load();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [load]);
+
+  // Responsive header sizing (keeps intent but adapts on small screens)
+  const headerProps = useMemo(
+    () => ({
+      variant: "compact",
+      showButton: true,
+      onStart: handleStartNewRound,
+      topPadding: 132,
+      logoHeight: 190,  
+      maxWidthPct: 1,    
+    }),
+    [handleStartNewRound]
+  );
 
   return (
     <ScreenGradient>
       <SafeAreaView style={styles.container}>
-        {/* TOPP: Logga + startknapp */}
-        <View style={styles.topSection}>
-          <FadeInSlide delay={0} fromY={-12} style={{ alignItems: "center" }}>
-            <Image
-              source={require("../assets/logo.png")}
-              style={[styles.logoImage, { width: screenWidth * 0.8 }]}
-            />
-          </FadeInSlide>
+        <LogoHeader {...headerProps} />
 
-          <FadeInSlide delay={120} fromY={8} style={{ width: "100%" }}>
-            <PrimaryButton
-              title="Start a new round"
-              onPress={() => navigation.navigate("StartRound")}
-              icon={<Ionicons name="arrow-forward" size={26} color={GREEN_TEXT_DARK} />}
-              variant="primary"
-            />
-          </FadeInSlide>
-        </View>
-
-        {/* NEDRE SEKTION – senaste rundor (max 3) */}
-        <FadeInSlide delay={240} fromY={10} style={{ marginBottom: 70 }}>
-          <FlatList
-            data={recentRounds}
-            keyExtractor={(item) => String(item.id)}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => navigation.navigate("RoundSummary", { id: item.id })}
-              >
-                <RoundCard course={item.course || "—"} date={item.date} />
-              </Pressable>
-            )}
-            ListFooterComponent={<View style={{ height: 14 }} />}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>Inga rundor ännu.</Text>
-            }
-          />
-
-          <View style={{ marginTop: 10, width: "100%" }}>
-            <PrimaryButton
-              title="Show previous rounds"
-              onPress={() => navigation.navigate("PreviousRounds")}
-              variant="primary"
-            />
+        {/* Error and loading feedback near the top to be noticed but not intrusive */}
+        {loadError && <ErrorBanner message={loadError} onRetry={handleRetry} />}
+        {isLoading && !loadError && (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator size="small" />
           </View>
-        </FadeInSlide>
+        )}
+
+        <View style={styles.listSection}>
+          <RecentRoundsList
+            rounds={rounds}
+            onOpenRound={handleOpenRound}
+            onShowAll={handleShowAllRounds}
+          />
+        </View>
       </SafeAreaView>
     </ScreenGradient>
   );
@@ -105,19 +117,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: "space-between",
   },
-  topSection: {
+  listSection: {
+    width: "100%",
+  },
+  loadingRow: {
+    width: "100%",
+    paddingVertical: 6,
     alignItems: "center",
-    paddingTop: 140,
-    gap: 28,
-  },
-  logoImage: {
-    height: 120,
-    resizeMode: "contain",
-    alignSelf: "center",
-  },
-  emptyText: {
-    textAlign: "center",
-    color: "#ffffffcc",
-    marginVertical: 8,
   },
 });
