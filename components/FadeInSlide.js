@@ -1,4 +1,8 @@
 // components/FadeInSlide.js
+
+// Smoothly fades in and slides content upward on mount.
+// Used to add subtle motion and visual polish to screen elements.
+
 import { useEffect, useRef } from "react";
 import { Animated, Easing } from "react-native";
 

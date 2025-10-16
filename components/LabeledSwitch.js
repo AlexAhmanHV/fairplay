@@ -1,3 +1,9 @@
+// components/LabeledSwitch.js
+
+// Combines a text label and help text with a styled on/off switch inside a FormCard.
+// Used in RoundScreen to toggle stats like "Fairway in regulation" and "Green in regulation".
+
+
 import { StyleSheet, Switch, Text, View } from "react-native";
 import { GREEN_TEXT_DARK } from "../theme/colors";
 import FormCard from "./FormCard";

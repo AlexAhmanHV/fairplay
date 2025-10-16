@@ -1,4 +1,8 @@
 // hooks/useRecentRounds.ts
+
+// Custom hook to fetch and manage a limited list of recent rounds from the database.
+// Used on the HomeScreen to display the latest saved rounds with basic error handling.
+
 import { useCallback, useState } from "react";
 import { getRounds } from "../db/rounds";
 

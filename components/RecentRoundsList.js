@@ -1,4 +1,8 @@
 // components/RecentRoundsList.js
+
+// Displays a short, non-scrollable list of the user's most recent rounds with a header and CTA.
+// Used on the HomeScreen to quickly access recent or all saved rounds.
+
 import PropTypes from "prop-types";
 import { FlatList, Pressable, Text, View } from "react-native";
 import FadeInSlide from "./FadeInSlide";

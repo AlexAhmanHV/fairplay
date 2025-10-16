@@ -1,4 +1,8 @@
-// Enkel wrapper för Open-Meteo (ingen API-nyckel behövs)
+// services/weather.js
+
+// Fetches the current weather from the Open-Meteo API using latitude and longitude.
+// Returns temperature, wind speed, weather code, and a short description (no API key required).
+
 export async function fetchCurrentWeather(lat, lon) {
   const params = new URLSearchParams({
     latitude: String(lat),
@@ -20,13 +24,11 @@ export async function fetchCurrentWeather(lat, lon) {
     windMps: c.wind_speed_10m ?? null,
     code: c.weather_code ?? null,
     time: c.time ?? null,
-    // Minimal text – kan mappas snyggare vid behov
     desc: weatherCodeToText(c.weather_code),
   };
 }
 
 function weatherCodeToText(code) {
-  // Lite förenklad mappning (Open-Meteo weather codes)
   if (code == null) return null;
   if ([0].includes(code)) return "Clear";
   if ([1, 2, 3].includes(code)) return "Partly cloudy";

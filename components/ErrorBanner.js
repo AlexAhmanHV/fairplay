@@ -1,13 +1,16 @@
 // components/ErrorBanner.js
-import PropTypes from "prop-types";
-import { StyleSheet, Text, View } from "react-native";
-import { GREEN_TEXT_DARK } from "../theme/colors";
-import PrimaryButton from "./PrimaryButton";
 
 /**
  * Small, reusable error banner.
  * Shows brief text + "Try again" without disrupting the layout.
  */
+
+import PropTypes from "prop-types";
+import { StyleSheet, Text, View } from "react-native";
+import { GREEN_TEXT_DARK } from "../theme/colors";
+import PrimaryButton from "./PrimaryButton";
+
+
 export default function ErrorBanner({ message, onRetry, style }) {
   return (
     <View style={[styles.errorBanner, style]}>

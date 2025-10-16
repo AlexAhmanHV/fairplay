@@ -1,4 +1,8 @@
 // components/PrimaryButton.js
+
+// A versatile green-themed button used across the app for primary and secondary actions.
+// Commonly appears in forms, empty states, and confirmation prompts.
+
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function PrimaryButton({ title, onPress, icon, variant = "primary" }) {

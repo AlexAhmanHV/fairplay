@@ -1,4 +1,8 @@
 // components/ScreenGradient.js
+
+// Wraps screen content in the app’s vertical green gradient background.
+// Used on nearly all screens to maintain a consistent visual style.
+
 import { LinearGradient } from "expo-linear-gradient";
 import { GRADIENT } from "../theme/colors";
 

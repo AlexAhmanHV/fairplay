@@ -1,3 +1,8 @@
+// components/StatRow.js
+
+// Displays a labeled statistic row with a value on the right.
+// Used in RoundSummaryScreen to show totals like strokes, putts, and fairways hit.
+
 import PropTypes from "prop-types";
 import { StyleSheet, Text, View } from "react-native";
 import { GREEN_TEXT_DARK } from "../theme/colors";

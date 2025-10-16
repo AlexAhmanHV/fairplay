@@ -1,4 +1,8 @@
 // components/RoundCard.js
+
+// Displays a compact card showing a course name and date for a past round.
+// Used in RecentRoundsList and PreviousRoundsScreen to represent saved rounds.
+
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";

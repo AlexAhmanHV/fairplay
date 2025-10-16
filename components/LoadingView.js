@@ -1,4 +1,8 @@
 // components/LoadingView.js
+
+// Displays a centered loading spinner with optional text inside a gradient background.
+// Used during data fetches or app initialization to indicate progress.
+
 import { ActivityIndicator, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";

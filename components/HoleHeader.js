@@ -1,6 +1,10 @@
-// ================================
+
 // components/HoleHeader.js
-// ================================
+
+// Displays the current hole number and progress within the round.
+// Typically shown at the top of the round screen to orient the player.
+
+
 import { Text, View } from 'react-native';
 
 

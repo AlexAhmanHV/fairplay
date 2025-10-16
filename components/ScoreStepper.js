@@ -1,4 +1,8 @@
 // components/ScoreStepper.js
+
+// A compact stepper control for increasing or decreasing numeric values like strokes or putts.
+// Used in RoundScreen inside ScoreRow components for quick score adjustments.
+
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 

@@ -1,4 +1,8 @@
 // components/Logo.js
+
+// Renders the app logo responsively based on screen width.
+// Used in headers and summary screens for consistent branding.
+
 import PropTypes from "prop-types";
 import { Image, useWindowDimensions } from "react-native";
 

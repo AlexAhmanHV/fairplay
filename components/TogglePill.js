@@ -1,3 +1,8 @@
+// components/TogglePill.js
+
+// A rounded toggle button that visually switches between active and inactive states.
+// Used for option selection, such as choosing 9 or 18 holes when starting a round.
+
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
 export default function TogglePill({ label, active, onPress, style }) {

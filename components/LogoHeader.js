@@ -1,4 +1,8 @@
 // components/LogoHeader.js
+
+// Displays the app logo with optional spacing, sizing, and a start button or custom CTA.
+// Used on the HomeScreen and PreviousRoundsScreen for consistent branded headers.
+
 import { Ionicons } from "@expo/vector-icons";
 import PropTypes from "prop-types";
 import { Image, useWindowDimensions, View } from "react-native";

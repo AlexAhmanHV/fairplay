@@ -3,26 +3,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import FadeInSlide from "../components/FadeInSlide";
+import FinishBar from "../components/FinishBar";
 import FormCard from "../components/FormCard";
 import LabeledSwitch from "../components/LabeledSwitch";
 import Logo from "../components/Logo";
-import NavButton from "../components/NavButton";
 import PrimaryButton from "../components/PrimaryButton";
+import RoundNavBar from "../components/RoundNavBar";
+import ScoreRow from "../components/ScoreRow";
 import ScoreStepper from "../components/ScoreStepper";
 import ScreenGradient from "../components/ScreenGradient";
+
 import { useRound } from "../context/RoundContext";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
-
-// Uniform row height for compact cards (shots/putts/switch rows).
-const ROW_HEIGHT = 44;
-
-/** Small presentational helper to keep rows visually consistent. */
-function RowUniform({ children, style }) {
-  return (
-    <View style={[styles.rowUniform, style]}>{children}</View>
-  );
-}
 
 export default function RoundScreen({ route, navigation }) {
   const { holesCount = 9 } = route.params ?? {};
@@ -57,6 +51,7 @@ export default function RoundScreen({ route, navigation }) {
   }
 
   const hole = current?.holes?.[current.currentIndex];
+
   // Defensive guard: if for some reason the hole is missing, show a safe fallback.
   if (!hole) {
     return (
@@ -76,6 +71,7 @@ export default function RoundScreen({ route, navigation }) {
   }
 
   const isStatsMode = current.mode === "stats";
+  const isFirstHole = current.currentIndex === 0;
   const isLastHole = current.currentIndex >= current.holesCount - 1;
 
   const totalStrokes = useMemo(
@@ -105,10 +101,6 @@ export default function RoundScreen({ route, navigation }) {
 
   const handleNext = isLastHole ? handleFinishRound : nextHole;
 
-  // Switch styling shared config
-  const switchTrackColor = { false: "#D9D9D9", true: GREEN_PRIMARY };
-  const switchThumbColor = "#FFFFFF";
-
   return (
     <ScreenGradient>
       <SafeAreaView style={styles.screen}>
@@ -130,123 +122,84 @@ export default function RoundScreen({ route, navigation }) {
           {/* Number of shots */}
           <FadeInSlide delay={100} fromY={8}>
             <FormCard>
-              <RowUniform>
-                <Text style={styles.rowLabel}>Number of shots</Text>
+              <ScoreRow label="Number of shots">
                 <ScoreStepper
                   size="sm"
                   value={hole.strokes}
                   onChange={(v) => setStrokeForHole(hole.number, v)}
                 />
-              </RowUniform>
+              </ScoreRow>
             </FormCard>
           </FadeInSlide>
 
           {isStatsMode && (
             <>
-{/* Fairway in regulation */}
-<FadeInSlide delay={140} fromY={8}>
-  <LabeledSwitch
-    label="Fairway in regulation"
-    help="Tee shot landed on the fairway."
-    value={!!hole.fairwayHit}
-    onValueChange={() => toggleFairwayHit(hole.number)}
-  />
-</FadeInSlide>
+              {/* Fairway in regulation */}
+              <FadeInSlide delay={140} fromY={8}>
+                <LabeledSwitch
+                  label="Fairway in regulation"
+                  help="Tee shot landed on the fairway."
+                  value={!!hole.fairwayHit}
+                  onValueChange={() => toggleFairwayHit(hole.number)}
+                />
+              </FadeInSlide>
 
-
-{/* Green in regulation */}
-<FadeInSlide delay={180} fromY={8}>
-  <LabeledSwitch
-    label="Green in regulation"
-    help="Ball on the green with strokes ≤ par - 2."
-    value={!!hole.greenInReg}
-    onValueChange={() => toggleGreenInReg(hole.number)}
-  />
-</FadeInSlide>
+              {/* Green in regulation */}
+              <FadeInSlide delay={180} fromY={8}>
+                <LabeledSwitch
+                  label="Green in regulation"
+                  help="Ball on the green with strokes ≤ par - 2."
+                  value={!!hole.greenInReg}
+                  onValueChange={() => toggleGreenInReg(hole.number)}
+                />
+              </FadeInSlide>
 
               {/* Putts */}
               <FadeInSlide delay={220} fromY={8}>
                 <FormCard>
-                  <RowUniform>
-                    <Text style={styles.rowLabel}>Putts</Text>
+                  <ScoreRow label="Putts">
                     <ScoreStepper
                       size="sm"
                       value={hole.putts ?? 0}
                       onChange={(v) => setPuttsForHole(hole.number, v)}
                     />
-                  </RowUniform>
+                  </ScoreRow>
                 </FormCard>
               </FadeInSlide>
 
               {/* Penalty strokes */}
-              <FadeInSlide delay={260} fromY={8}>
-                <FormCard>
-                  <RowUniform>
-                    <Text style={styles.rowLabel}>Penalty strokes</Text>
-                    <ScoreStepper
-                      size="sm"
-                      value={hole.penalties ?? 0}
-                      onChange={(v) =>
-                        typeof setPenaltiesForHole === "function" &&
-                        setPenaltiesForHole(hole.number, v)
-                      }
-                    />
-                  </RowUniform>
-                </FormCard>
-              </FadeInSlide>
+<FadeInSlide delay={260} fromY={8} style={{ marginBottom: 26 }}>
+  <FormCard>
+    <ScoreRow label="Penalty strokes">
+      <ScoreStepper
+        size="sm"
+        value={hole.penalties ?? 0}
+        onChange={(v) =>
+          typeof setPenaltiesForHole === "function" &&
+          setPenaltiesForHole(hole.number, v)
+        }
+      />
+    </ScoreRow>
+  </FormCard>
+</FadeInSlide>
             </>
           )}
         </View>
 
         {/* Navigation row: previous / next(or finish) */}
-        <View style={styles.navRow}>
-          <View style={styles.navCol}>
-            <FadeInSlide delay={300} fromY={10}>
-              <NavButton
-                title="Previous hole"
-                onPress={prevHole}
-                variant={current.currentIndex === 0 ? "secondary" : "primary"}
-                disabled={current.currentIndex === 0}
-                iconPosition="left"
-                icon={
-                  <Ionicons
-                    name="chevron-back"
-                    size={18}
-                    color={current.currentIndex === 0 ? GREEN_TEXT_DARK : "#FFFFFF"}
-                  />
-                }
-              />
-            </FadeInSlide>
-          </View>
-
-          <View style={styles.navCol}>
-            <FadeInSlide delay={320} fromY={10}>
-              <NavButton
-                title={isLastHole ? "Finish" : "Next hole"}
-                onPress={handleNext}
-                variant="primary"
-                iconPosition="right"
-                icon={<Ionicons name="chevron-forward" size={18} color="#FFFFFF" />}
-              />
-            </FadeInSlide>
-          </View>
-        </View>
+        <FadeInSlide delay={300} fromY={10} style={{ marginBottom: 16 }}>
+          <RoundNavBar
+            onPrev={prevHole}
+            onNext={handleNext}
+            isFirst={isFirstHole}
+            isLast={isLastHole}
+          />
+        </FadeInSlide>
 
         {/* Finish now + running total */}
-        <View style={styles.footer}>
-          <FadeInSlide delay={340} fromY={10}>
-            <PrimaryButton
-              title="Finish round now"
-              onPress={handleFinishRound}
-              variant="primary"
-              icon={<Ionicons name="checkmark" size={20} color={GREEN_TEXT_DARK} />}
-            />
-          </FadeInSlide>
-
-          <Text style={styles.runningTotal}>
-            Running total: {totalStrokes} shots
-          </Text>
-        </View>
+        <FadeInSlide delay={340} fromY={10}>
+          <FinishBar total={totalStrokes} onFinish={handleFinishRound} />
+        </FadeInSlide>
       </SafeAreaView>
     </ScreenGradient>
   );
@@ -304,40 +257,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 16,
     gap: 10,
-  },
-  rowUniform: {
-    height: ROW_HEIGHT,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  rowLabel: {
-    color: GREEN_TEXT_DARK,
-    fontWeight: "700",
-  },
-  switch: {
-    transform: [{ scale: 0.9 }],
-  },
-
-  navRow: {
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    gap: 12,
-    marginTop: "auto",
-    marginBottom: 8,
-  },
-  navCol: {
-    flex: 1,
-    minWidth: 0,
-  },
-
-  footer: {
-    paddingHorizontal: 20,
-  },
-  runningTotal: {
-    textAlign: "center",
-    color: "#6B6B6B",
-    marginTop: 8,
   },
 });

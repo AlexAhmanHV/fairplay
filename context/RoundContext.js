@@ -1,7 +1,10 @@
-// ================================
+
 // context/RoundContext.js
-// Holds an in-memory ongoing round until saved
-// ================================
+
+// Holds the in-memory state for an ongoing round and exposes helpers to update it.
+// Lets you start a round, edit hole stats, move between holes, and save/finalize to the DB.
+// Wrap your app with <RoundProvider> and access via useRound() to read `current` and call actions.
+
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { initDb, saveRound } from "../db/rounds";
 

@@ -1,3 +1,9 @@
+//Components/(FormCard.js)
+
+// A reusable container with padding, rounded corners, and subtle shadow styling.
+// Commonly used in RoundScreen and RoundSummaryScreen to wrap score inputs and stat rows.
+
+
 import { StyleSheet, View } from "react-native";
 import { GREEN_PRIMARY } from "../theme/colors";
 

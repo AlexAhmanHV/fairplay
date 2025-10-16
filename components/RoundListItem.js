@@ -1,3 +1,10 @@
+// components/RoundListItem.js
+
+// Renders a pressable round row with course, date, and total strokes.
+// Shows ripple/opacity feedback and a spinner while navigating to the summary.
+// Includes a separate delete button that disables during navigation/deletion.
+// Used in PreviousRoundsScreen to list saved rounds.
+
 import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { GREEN_TEXT_DARK } from "../theme/colors";

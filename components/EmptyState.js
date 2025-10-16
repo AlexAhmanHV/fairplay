@@ -1,4 +1,9 @@
 // components/EmptyState.js
+
+// Displays a friendly message when there’s no data to show.
+// Includes a title, optional description, and an action button
+// to guide the user toward creating or loading content.
+
 import { StyleSheet, Text, View } from "react-native";
 import { GREEN_TEXT_DARK } from "../theme/colors";
 import PrimaryButton from "./PrimaryButton";

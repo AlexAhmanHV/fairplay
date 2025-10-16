@@ -1,4 +1,8 @@
 // components/NavButton.js
+
+// A reusable navigation-style button supporting primary and secondary variants.
+// Commonly used in RoundScreen for "Next hole" and "Previous hole" actions.
+
 import { Pressable, Text, View } from "react-native";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
