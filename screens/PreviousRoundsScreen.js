@@ -2,10 +2,8 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -13,11 +11,13 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import EmptyState from "../components/EmptyState";
 import ErrorBanner from "../components/ErrorBanner";
 import FadeInSlide from "../components/FadeInSlide";
-import FormCard from "../components/FormCard";
+import LoadingView from "../components/LoadingView";
 import LogoHeader from "../components/LogoHeader";
 import PrimaryButton from "../components/PrimaryButton";
+import RoundListItem from "../components/RoundListItem"; // ✅ use the extracted component
 import ScreenGradient from "../components/ScreenGradient";
 
 import { deleteRound, getRounds } from "../db/rounds";
@@ -43,6 +43,7 @@ export default function PreviousRoundsScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  const [navigatingId, setNavigatingId] = useState(null);
 
   /** Fetch rounds from DB with error handling. */
   const loadRounds = useCallback(async () => {
@@ -61,7 +62,10 @@ export default function PreviousRoundsScreen({ navigation }) {
 
   /** Reload when screen gains focus (e.g., returning from another screen). */
   useEffect(() => {
-    const unsub = navigation.addListener("focus", loadRounds);
+    const unsub = navigation.addListener("focus", () => {
+      setNavigatingId(null); // stop any spinner when we come back
+      loadRounds();
+    });
     loadRounds();
     return unsub;
   }, [navigation, loadRounds]);
@@ -101,13 +105,14 @@ export default function PreviousRoundsScreen({ navigation }) {
   /** Stable key extractor for FlatList. */
   const keyExtractor = useCallback((item) => String(item.id), []);
 
-  /** Render a single round row. Kept as a small component for clarity. */
+  /** Render a single round row. */
   const renderItem = useCallback(
     ({ item, index }) => {
       const course = item.course || "—";
       const date = formatDate(item.date);
       const total = item.total_strokes ?? 0;
       const isDeleting = deletingId === item.id;
+      const isNavigating = navigatingId === item.id;
 
       return (
         <FadeInSlide delay={50 + index * 40} fromY={8}>
@@ -116,26 +121,22 @@ export default function PreviousRoundsScreen({ navigation }) {
             date={date}
             totalStrokes={total}
             isDeleting={isDeleting}
-            onOpen={() => navigation.navigate("RoundSummary", { id: item.id })}
+            isNavigating={isNavigating}
+            onOpen={() => {
+              if (isNavigating) return; // ignore double taps
+              setNavigatingId(item.id); // show spinner
+              navigation.navigate("RoundSummary", { id: item.id });
+            }}
             onDelete={() => confirmDelete(item.id)}
           />
         </FadeInSlide>
       );
     },
-    [confirmDelete, deletingId, navigation]
+    [confirmDelete, deletingId, navigation, navigatingId]
   );
 
   // Loading screen (first load)
-  if (loading) {
-    return (
-      <ScreenGradient>
-        <SafeAreaView style={styles.fillCenter}>
-          <ActivityIndicator color={GREEN_PRIMARY} />
-          <Text style={styles.loadingText}>Laddar rundor…</Text>
-        </SafeAreaView>
-      </ScreenGradient>
-    );
-  }
+  if (loading) return <LoadingView label="Laddar rundor…" />;
 
   // Empty state
   if (!rounds.length) {
@@ -144,7 +145,12 @@ export default function PreviousRoundsScreen({ navigation }) {
         <SafeAreaView style={styles.screen}>
           <View style={styles.headerWrap}>
             <FadeInSlide delay={0} fromY={-10}>
-              <LogoHeader variant="compact" showButton={false} topPadding={12} logoHeight={64} />
+              <LogoHeader
+                variant="compact"
+                showButton={false}
+                topPadding={12}
+                logoHeight={64}
+              />
               <Text style={styles.title}>Previous rounds</Text>
             </FadeInSlide>
           </View>
@@ -155,18 +161,19 @@ export default function PreviousRoundsScreen({ navigation }) {
             </View>
           ) : null}
 
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyTitle}>Inga sparade rundor ännu</Text>
-            <Text style={styles.emptyBody}>Starta en runda från hemskärmen och spara den här.</Text>
-
-            <PrimaryButton
-              title="Start a round"
-              variant="primary"
-              onPress={() => navigation.navigate("StartRound")}
-              icon={<MaterialCommunityIcons name="golf-tee" size={20} color={GREEN_TEXT_DARK} />}
-              style={{ marginTop: 8 }}
-            />
-          </View>
+          <EmptyState
+            title="Inga sparade rundor ännu"
+            body="Starta en runda från hemskärmen och spara den här."
+            actionTitle="Start a round"
+            actionIcon={
+              <MaterialCommunityIcons
+                name="golf-tee"
+                size={20}
+                color={GREEN_TEXT_DARK}
+              />
+            }
+            onPress={() => navigation.navigate("StartRound")}
+          />
         </SafeAreaView>
       </ScreenGradient>
     );
@@ -179,7 +186,12 @@ export default function PreviousRoundsScreen({ navigation }) {
         {/* Header */}
         <View style={styles.headerWrap}>
           <FadeInSlide delay={0} fromY={-10}>
-            <LogoHeader variant="compact" showButton={false} topPadding={12} logoHeight={64} />
+            <LogoHeader
+              variant="compact"
+              showButton={false}
+              topPadding={12}
+              logoHeight={64}
+            />
             <Text style={styles.title}>Previous rounds</Text>
           </FadeInSlide>
         </View>
@@ -205,13 +217,14 @@ export default function PreviousRoundsScreen({ navigation }) {
                 tintColor={GREEN_PRIMARY}
               />
             }
-            // minor bottom spacing so the last card isn't tight against the footer shadow/edge
             contentContainerStyle={[styles.listContent, { paddingBottom: 8 }]}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
           />
 
-          {/* Sticky footer (non-scrolling) */}
-          <View style={[styles.footerWrap, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+          {/* Sticky footer */}
+          <View
+            style={[styles.footerWrap, { paddingBottom: Math.max(insets.bottom, 12) }]}
+          >
             <PrimaryButton
               title="Back to the landing page"
               variant="primary"
@@ -225,66 +238,8 @@ export default function PreviousRoundsScreen({ navigation }) {
   );
 }
 
-/**
- * RoundListItem
- * Single row with:
- * - pressable "open summary" area (course/date/total + chevron)
- * - separate delete button to avoid overlap
- */
-function RoundListItem({ course, date, totalStrokes, isDeleting, onOpen, onDelete }) {
-  return (
-    <FormCard>
-      <View style={styles.row}>
-        {/* Navigate to summary */}
-        <Pressable
-          onPress={onOpen}
-          style={styles.rowPressable}
-          accessibilityRole="button"
-          accessibilityLabel={`View round ${course} ${date}`}
-        >
-          <View style={styles.rowTextWrap}>
-            <Text style={styles.rowCourse}>{course}</Text>
-            <Text style={styles.rowMeta}>
-              {date} • {totalStrokes} slag
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={GREEN_TEXT_DARK} />
-        </Pressable>
-
-        {/* Delete button */}
-        <Pressable
-          onPress={onDelete}
-          disabled={isDeleting}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={styles.deleteBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Remove round"
-        >
-          <Ionicons
-            name="close"
-            size={16}
-            color={isDeleting ? "#AAA" : "#B00020"}
-          />
-        </Pressable>
-      </View>
-    </FormCard>
-  );
-}
-
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  fillCenter: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-  },
-  loadingText: {
-    marginTop: 8,
-    color: GREEN_TEXT_DARK,
-  },
+  screen: { flex: 1 },
 
   headerWrap: {
     paddingHorizontal: 20,
@@ -299,30 +254,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 20,
   },
-
   errorWrap: {
     paddingHorizontal: 20,
     marginBottom: 8,
   },
-
-  emptyWrap: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: GREEN_TEXT_DARK,
-  },
-  emptyBody: {
-    color: "#666",
-    textAlign: "center",
-  },
-
-  // Main content: FlatList (flex:1) + sticky footer
   content: {
     flex: 1,
     paddingHorizontal: 20,
@@ -331,47 +266,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     backgroundColor: "transparent",
   },
-
-  // List styles
   listContent: {
-    paddingHorizontal: 0, // content already has horizontal padding
+    paddingHorizontal: 0,
     paddingBottom: 24,
   },
-  separator: {
-    height: 10,
-  },
-
-  // Row styles
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    minHeight: 56,
-  },
-  rowPressable: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 4,
-    paddingRight: 6,
-  },
-  rowTextWrap: {
-    flex: 1,
-    gap: 4,
-    paddingRight: 12,
-  },
-  rowCourse: {
-    fontWeight: "700",
-    fontSize: 16,
-    color: GREEN_TEXT_DARK,
-  },
-  rowMeta: {
-    color: "#5E6D63",
-  },
-  deleteBtn: {
-    padding: 8,
-    borderRadius: 999,
-    backgroundColor: "#F7F7F7",
-  },
+  separator: { height: 10 },
 });

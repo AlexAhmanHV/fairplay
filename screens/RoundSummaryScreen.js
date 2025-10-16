@@ -63,7 +63,10 @@ export default function RoundSummaryScreen({ route, navigation }) {
   const weatherLine = hasWeather ? formatWeatherLine(data.weather) : null;
 
   // Handlers
-  const handleBackHome = useCallback(() => navigation.navigate("Home"), [navigation]);
+  // ✅ Jump directly to PreviousRounds screen (route name must match your navigator)
+  const handleGoToPreviousRounds = useCallback(() => {
+    navigation.navigate("PreviousRounds");
+  }, [navigation]);
 
   // Loading state UI
   if (loading) {
@@ -93,10 +96,10 @@ export default function RoundSummaryScreen({ route, navigation }) {
           </View>
 
           <PrimaryButton
-            title="Back to the landing page"
+            title="Back to previous rounds"
             variant="primary"
-            onPress={handleBackHome}
-            icon={<Ionicons name="home" size={20} color={GREEN_TEXT_DARK} />}
+            onPress={handleGoToPreviousRounds}
+            icon={<Ionicons name="arrow-back" size={20} color={GREEN_TEXT_DARK} />}
             style={styles.errorCta}
           />
         </SafeAreaView>
@@ -139,10 +142,10 @@ export default function RoundSummaryScreen({ route, navigation }) {
           <View style={styles.ctaWrap}>
             <FadeInSlide delay={320} fromY={10}>
               <PrimaryButton
-                title="Back to the landing page"
+                title="Back to previous rounds"
                 variant="primary"
-                onPress={handleBackHome}
-                icon={<Ionicons name="home" size={20} color={GREEN_TEXT_DARK} />}
+                onPress={handleGoToPreviousRounds}
+                icon={<Ionicons name="arrow-back" size={20} color={GREEN_TEXT_DARK} />}
               />
             </FadeInSlide>
           </View>
