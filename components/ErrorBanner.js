@@ -1,9 +1,7 @@
 // components/ErrorBanner.js
 
-/**
- * Small, reusable error banner.
- * Shows brief text + "Try again" without disrupting the layout.
- */
+// A small, reusable error banner.
+// Displays an error message and a "Try again" button to retry the failed action.
 
 import PropTypes from "prop-types";
 import { StyleSheet, Text, View } from "react-native";
