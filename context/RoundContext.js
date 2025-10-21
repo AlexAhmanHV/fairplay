@@ -1,10 +1,13 @@
-// context/RoundContext.js
-//
-// Holds the in-memory state for an ongoing round and exposes helpers to update it.
-// Adds snapshot/hydrate + autosave into your SQLite DB (via dbSaveActiveRound / dbClearActiveRound)
-// so you can resume a round from Home/Start screen.
-//
-// Wrap your app with <RoundProvider> and access via useRound().
+/**
+
+RoundContext
+Provides the in-memory state for an active round (holes, current index, metadata) and exposes actions to mutate it (scoring, stats toggles, hole navigation).
+Includes snapshot/hydration logic plus a debounced autosave to SQLite via dbSaveActiveRound, so an in-progress round can be resumed from Home/Start.
+Guards against duplicate drafts by blocking further autosaves during endRound() and clearing any cached snapshot before persisting the final round.
+Automatically saves on app background/unmount, and resumes autosaving when a draft is hydrated.
+startRound() initializes holes (optionally with stats fields), while endRound() writes a final, aggregated record to the rounds tables and clears the active draft.
+Wrap your app with <RoundProvider> and use useRound() to access current state and the action methods.
+*/
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppState } from "react-native";
