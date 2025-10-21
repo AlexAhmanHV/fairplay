@@ -14,6 +14,13 @@ import { getRoundDetails } from "../db/rounds";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 import { formatWeatherLine } from "../utils/formatters";
 
+/**
+RoundSummaryScreen
+Loads a saved round by id, shows a loading state, and handles errors with a retry + CTA back to PreviousRounds.
+On success, renders course/date, optional weather line, and compact stat cards (holes, strokes, putts, fairways, penalties) with subtle animations.
+Keeps content inside a ScrollView with safe-area padding and ends with a primary button to return to PreviousRounds.
+*/
+
 export default function RoundSummaryScreen({ route, navigation }) {
   const { id } = route.params ?? {};
   const insets = useSafeAreaInsets();

@@ -1,5 +1,4 @@
 // components/NavButton.js
-
 // A reusable navigation-style button supporting primary and secondary variants.
 // Commonly used in RoundScreen for "Next hole" and "Previous hole" actions.
 
@@ -14,19 +13,29 @@ export default function NavButton({
   variant = "primary",   // "primary" | "secondary"
   disabled = false,
   style,
+  textColor,             // ⟵ NEW: override text color
+  textStyle,             // ⟵ NEW: extra text styling, applied last
 }) {
+  // Base (secondary-like) defaults
   let bg = "#FFFFFF";
   let border = "#E6E6E6";
-  let text = GREEN_TEXT_DARK;
+  let computedTextColor = GREEN_TEXT_DARK;
 
   if (variant === "primary") {
     bg = GREEN_PRIMARY;
     border = GREEN_PRIMARY;
-    text = "#FFFFFF";
+    // Default to your dark green unless caller overrides
+    computedTextColor = textColor ?? GREEN_TEXT_DARK;
   } else if (variant === "secondary") {
     bg = "#FFFFFF";
     border = "#E6E6E6";
-    text = GREEN_TEXT_DARK;
+    computedTextColor = textColor ?? GREEN_TEXT_DARK;
+  }
+
+  // If icon has no explicit color, tint it to match the text
+  let renderedIcon = icon;
+  if (icon && icon.props && icon.props.color == null) {
+    renderedIcon = { ...icon, props: { ...icon.props, color: computedTextColor } };
   }
 
   return (
@@ -52,8 +61,10 @@ export default function NavButton({
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      {icon ? <View>{icon}</View> : null}
-      <Text style={{ color: text, fontWeight: "700", fontSize: 16 }}>{title}</Text>
+      {renderedIcon ? <View>{renderedIcon}</View> : null}
+      <Text style={[{ color: computedTextColor, fontWeight: "700", fontSize: 16 }, textStyle]}>
+        {title}
+      </Text>
     </Pressable>
   );
 }

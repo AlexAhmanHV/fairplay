@@ -1,68 +1,91 @@
 // components/PrimaryButton.js
 
-// A versatile green-themed button used across the app for primary and secondary actions.
-// Commonly appears in forms, empty states, and confirmation prompts.
+//A branded CTA with optional subtitle and an optional right-side icon button (e.g., a close “X”) with its own handler.
+//Centers the title/subtitle, applies consistent padding, rounded corners, and subtle elevation; supports disabled state and custom styles.
+//Ideal for primary actions (e.g., Start/Resume), while the right icon enables inline secondary actions like discarding a draft.
 
+import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
-export default function PrimaryButton({ title, onPress, icon, variant = "primary" }) {
-  const isPrimary = variant === "primary";
+const ICON_SIZE = 18; // keep icon size consistent
 
+export default function PrimaryButton({
+  title,
+  subtitle,                 // optional small line under title
+  onPress,
+  disabled = false,
+  style,
+  textStyle,
+  rightIcon,                // e.g. "close"
+  onRightPress,             // handler for right icon
+  testID,
+  accessibilityLabel,
+}) {
   return (
     <TouchableOpacity
-      style={[styles.button, isPrimary ? styles.primary : styles.secondary]}
       onPress={onPress}
-      activeOpacity={0.7}
+      disabled={disabled}
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      style={[styles.button, disabled && styles.disabled, style]}
+      activeOpacity={0.8}
     >
-      <Text style={[styles.text, isPrimary ? styles.textPrimary : styles.textSecondary]}>
-        {title}
-      </Text>
-      {icon && <View style={styles.iconContainer}>{icon}</View>}
+      <View style={styles.inner}>
+        <Text style={[styles.title, textStyle]}>{title}</Text>
+        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      </View>
+
+      {rightIcon && onRightPress ? (
+        <TouchableOpacity
+          onPress={onRightPress}
+          accessibilityRole="button"
+          accessibilityLabel={rightIcon === "close" ? "Discard" : "Action"}
+          hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+          style={styles.rightIconBtn}
+        >
+          <Ionicons name={rightIcon} size={ICON_SIZE} color={GREEN_TEXT_DARK} />
+        </TouchableOpacity>
+      ) : null}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 22,
-    flexDirection: "row",
+    backgroundColor: GREEN_PRIMARY,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     alignItems: "center",
     justifyContent: "center",
-
-    // 🌫️ Subtil skugga
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3, // för Android
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-
-  // 🌿 Primär ljusgrön knapp
-  primary: {
-    backgroundColor: "#95d5b2", // ljusgrön
+  disabled: { opacity: 0.6 },
+  inner: { alignItems: "center" },
+  title: {
+    color: GREEN_TEXT_DARK,
+    fontSize: 16,
+    fontWeight: "700",
   },
-  textPrimary: {
-    color: "#1b4332", // mörkgrön text
-    fontSize: 18,
-    fontWeight: "600",
+  subtitle: {
+    color: GREEN_TEXT_DARK,
+    opacity: 0.9,
+    fontSize: 12,
+    marginTop: 2,
   },
-
-  // 🍃 Sekundär ännu ljusare variant
-  secondary: {
-    backgroundColor: "#d8f3dc",
-  },
-  textSecondary: {
-    color: "#2d6a4f",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-
-  text: {
-    textAlign: "center",
-  },
-  iconContainer: {
-    marginLeft: 8,
+  rightIconBtn: {
+    position: "absolute",
+    right: 8,
+    top: 0,
+    bottom: 0,                 // fill full height of the button
+    justifyContent: "center",  // center the icon vertically
+    alignItems: "center",
+    paddingHorizontal: 8,      // comfy tap target
+    minWidth: 36,              // ~44pt touch target on most devices
   },
 });

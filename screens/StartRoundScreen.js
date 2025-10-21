@@ -15,6 +15,15 @@ import { useRound } from "../context/RoundContext";
 import { fetchCurrentWeather } from "../services/weather";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
+
+/**
+StartRoundScreen
+Collects course name, hole count, and preferences (stats + weather) to initialize a new round.
+Validates the course field, optionally fetches location-based weather, and then calls RoundContext.startRound().
+Uses subtle animations, keyboard-safe layout, and clear validation messaging before navigating to the Round screen.
+*/
+
+
 export default function StartRoundScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [course, setCourse] = useState("");

@@ -18,6 +18,15 @@ import ScreenGradient from "../components/ScreenGradient";
 import { useRound } from "../context/RoundContext";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
+/**
+
+RoundScreen
+Initializes a new round if none is active and shows header info (course, date, and “Hole X of Y”).
+Renders the shots stepper always, and conditionally adds Fairway/Green/Putts/Penalties in stats mode.
+Adjusts vertical spacing when stats are off for a more airy layout, and animates sections with FadeInSlide.
+Handles finishing with confirmation, persists via RoundContext.endRound(), and navigates to RoundSummary on success.
+*/
+
 export default function RoundScreen({ route, navigation }) {
   const { holesCount = 9 } = route.params ?? {};
   const {
@@ -79,6 +88,18 @@ export default function RoundScreen({ route, navigation }) {
     [current.holes]
   );
 
+  // Spacing tuned by mode (more air when stats are off)
+  const spacing = useMemo(
+    () => ({
+      cardsGap: isStatsMode ? 10 : 16,         // space between cards
+      afterShotsCard: isStatsMode ? 10 : 24,   // space below the shots card
+      beforeNav: isStatsMode ? 16 : 20,        // space before nav bar
+      beforeFinish: isStatsMode ? 12 : 20,     // space before FinishBar
+      stepperMB: isStatsMode ? 8 : 14,         // extra slack below steppers if needed
+    }),
+    [isStatsMode]
+  );
+
   /** Finish flow with confirmation and persistence error handling. */
   const handleFinishRound = useCallback(() => {
     Alert.alert("Finish round", "Do you want to save and finish this round?", [
@@ -118,15 +139,16 @@ export default function RoundScreen({ route, navigation }) {
         </FadeInSlide>
 
         {/* Content cards */}
-        <View style={styles.cards}>
+        <View style={[styles.cards, { gap: spacing.cardsGap }]}>
           {/* Number of shots */}
-          <FadeInSlide delay={100} fromY={8}>
+          <FadeInSlide delay={100} fromY={8} style={{ marginBottom: spacing.afterShotsCard }}>
             <FormCard>
               <ScoreRow label="Number of shots">
                 <ScoreStepper
                   size="sm"
                   value={hole.strokes}
                   onChange={(v) => setStrokeForHole(hole.number, v)}
+                  marginBottom={spacing.stepperMB}
                 />
               </ScoreRow>
             </FormCard>
@@ -162,32 +184,34 @@ export default function RoundScreen({ route, navigation }) {
                       size="sm"
                       value={hole.putts ?? 0}
                       onChange={(v) => setPuttsForHole(hole.number, v)}
+                      marginBottom={spacing.stepperMB}
                     />
                   </ScoreRow>
                 </FormCard>
               </FadeInSlide>
 
               {/* Penalty strokes */}
-<FadeInSlide delay={260} fromY={8} style={{ marginBottom: 26 }}>
-  <FormCard>
-    <ScoreRow label="Penalty strokes">
-      <ScoreStepper
-        size="sm"
-        value={hole.penalties ?? 0}
-        onChange={(v) =>
-          typeof setPenaltiesForHole === "function" &&
-          setPenaltiesForHole(hole.number, v)
-        }
-      />
-    </ScoreRow>
-  </FormCard>
-</FadeInSlide>
+              <FadeInSlide delay={260} fromY={8} style={{ marginBottom: 26 }}>
+                <FormCard>
+                  <ScoreRow label="Penalty strokes">
+                    <ScoreStepper
+                      size="sm"
+                      value={hole.penalties ?? 0}
+                      onChange={(v) =>
+                        typeof setPenaltiesForHole === "function" &&
+                        setPenaltiesForHole(hole.number, v)
+                      }
+                      marginBottom={spacing.stepperMB}
+                    />
+                  </ScoreRow>
+                </FormCard>
+              </FadeInSlide>
             </>
           )}
         </View>
 
         {/* Navigation row: previous / next(or finish) */}
-        <FadeInSlide delay={300} fromY={10} style={{ marginBottom: 16 }}>
+        <FadeInSlide delay={300} fromY={10} style={{ marginBottom: spacing.beforeNav }}>
           <RoundNavBar
             onPrev={prevHole}
             onNext={handleNext}
@@ -197,7 +221,7 @@ export default function RoundScreen({ route, navigation }) {
         </FadeInSlide>
 
         {/* Finish now + running total */}
-        <FadeInSlide delay={340} fromY={10}>
+        <FadeInSlide delay={340} fromY={10} style={{ marginBottom: spacing.beforeFinish }}>
           <FinishBar total={totalStrokes} onFinish={handleFinishRound} />
         </FadeInSlide>
       </SafeAreaView>
@@ -256,6 +280,6 @@ const styles = StyleSheet.create({
   cards: {
     paddingHorizontal: 20,
     marginTop: 16,
-    gap: 10,
+    // gap injected dynamically
   },
 });

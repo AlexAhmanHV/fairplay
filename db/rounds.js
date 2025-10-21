@@ -1,7 +1,7 @@
 // ================================
 // db/rounds.js
-// SQLite helpers for rounds
-// Requires expo-sqlite (async API)
+// SQLite helpers for rounds + single-draft ("resume round") storage
+// Requires expo-sqlite (async API: openDatabaseSync/execAsync/runAsync/...)
 // ================================
 import * as SQLite from "expo-sqlite";
 
@@ -38,6 +38,13 @@ export async function initDb() {
       penalties INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY(round_id) REFERENCES rounds(id) ON DELETE CASCADE
     );
+
+    -- Single-draft storage for "Resume round"
+    CREATE TABLE IF NOT EXISTS active_rounds (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
   `);
 
   // Migrations (fail-silent if columns already exist)
@@ -56,6 +63,53 @@ export async function initDb() {
   try { await db.execAsync(`ALTER TABLE rounds ADD COLUMN weather_lat REAL;`); } catch {}
   try { await db.execAsync(`ALTER TABLE rounds ADD COLUMN weather_lon REAL;`); } catch {}
 }
+
+/* ========== "Resume round" – draft helpers (single draft) ==========
+
+We store exactly one draft under key = 'last'.
+If you later want multiple drafts, we can switch to key = roundId
+and keep a pointer row elsewhere. For now, this keeps the API simple:
+
+- dbSaveActiveRound(snapshot)
+- dbLoadActiveRound()
+- dbClearActiveRound()
+
+`snapshot` is a JSON object produced by RoundContext.stateToSnapshot().
+*/
+const DRAFT_KEY = "last";
+
+export async function dbSaveActiveRound(snapshot) {
+  if (!snapshot) return;
+  const payload = JSON.stringify({
+    ...snapshot,
+    version: 1,
+    updatedAt: Date.now(),
+  });
+  const now = Date.now();
+  await db.runAsync(
+    `REPLACE INTO active_rounds (key, value, updated_at) VALUES (?, ?, ?);`,
+    [DRAFT_KEY, payload, now]
+  );
+}
+
+export async function dbLoadActiveRound() {
+  const row = await db.getFirstAsync(
+    `SELECT value FROM active_rounds WHERE key = ?;`,
+    [DRAFT_KEY]
+  );
+  if (!row?.value) return null;
+  try {
+    return JSON.parse(row.value);
+  } catch {
+    return null;
+  }
+}
+
+export async function dbClearActiveRound() {
+  await db.runAsync(`DELETE FROM active_rounds WHERE key = ?;`, [DRAFT_KEY]);
+}
+
+/* ===================== Rounds CRUD ===================== */
 
 export async function saveRound({ date, holesCount, holes, course, weather }) {
   if (!holes?.length) throw new Error("No holes to save");
@@ -107,7 +161,7 @@ export async function saveRound({ date, holesCount, holes, course, weather }) {
 }
 
 export async function getRounds() {
-  // Används för listor + Home (senaste 3). Sortering senast först.
+  // Used for lists + Home (latest first).
   return await db.getAllAsync(
     `SELECT id, date, holes_count, total_strokes, course
      FROM rounds
@@ -160,6 +214,6 @@ export async function getRoundDetails(roundId) {
 }
 
 export async function deleteRound(roundId) {
-  // Foreign keys ON => round_holes rensas via CASCADE
+  // Foreign keys ON => round_holes cleared via CASCADE
   await db.runAsync("DELETE FROM rounds WHERE id = ?", [roundId]);
 }

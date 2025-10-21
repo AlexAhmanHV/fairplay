@@ -18,7 +18,8 @@ export default function RoundNavBar({ onPrev, onNext, isFirst, isLast }) {
           variant={isFirst ? "secondary" : "primary"}
           disabled={isFirst}
           iconPosition="left"
-          icon={<Ionicons name="chevron-back" size={18} color={isFirst ? GREEN_TEXT_DARK : "#FFFFFF"} />}
+          textColor={GREEN_TEXT_DARK}
+          icon={<Ionicons name="chevron-back" size={18} color={GREEN_TEXT_DARK} />}
           accessibilityRole="button"
         />
       </View>
@@ -28,7 +29,8 @@ export default function RoundNavBar({ onPrev, onNext, isFirst, isLast }) {
           onPress={onNext}
           variant="primary"
           iconPosition="right"
-          icon={<Ionicons name="chevron-forward" size={18} color="#FFFFFF" />}
+          textColor={GREEN_TEXT_DARK}
+          icon={<Ionicons name="chevron-forward" size={18} color={GREEN_TEXT_DARK} />}
           accessibilityRole="button"
         />
       </View>
