@@ -19,12 +19,9 @@ export default function LabeledSwitch({ label, help, value, onValueChange }) {
         <Switch
           value={value}
           onValueChange={onValueChange}
-          // ✅ vit "thumb" oavsett läge, ser ut som en riktig switch
           thumbColor={"#ffffff"}
-          // ✅ tydlig grön track när på, diskret grå när av
           trackColor={{ false: "#cbd5d1", true: "#52b788" }}
           ios_backgroundColor="#cbd5d1"
-          // lite större för tydlighet
           style={{ transform: [{ scale: 1.05 }] }}
         />
       </View>

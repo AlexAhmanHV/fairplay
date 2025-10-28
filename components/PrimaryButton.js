@@ -8,17 +8,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
-const ICON_SIZE = 18; // keep icon size consistent
+const ICON_SIZE = 18;
 
 export default function PrimaryButton({
   title,
-  subtitle,                 // optional small line under title
+  subtitle,                 
   onPress,
   disabled = false,
   style,
   textStyle,
-  rightIcon,                // e.g. "close"
-  onRightPress,             // handler for right icon
+  rightIcon,                
+  onRightPress,             
   testID,
   accessibilityLabel,
 }) {
@@ -82,10 +82,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 8,
     top: 0,
-    bottom: 0,                 // fill full height of the button
-    justifyContent: "center",  // center the icon vertically
+    bottom: 0,                 
+    justifyContent: "center",  
     alignItems: "center",
-    paddingHorizontal: 8,      // comfy tap target
-    minWidth: 36,              // ~44pt touch target on most devices
+    paddingHorizontal: 8,      
+    minWidth: 36,              
   },
 });

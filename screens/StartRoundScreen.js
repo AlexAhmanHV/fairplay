@@ -85,7 +85,6 @@ export default function StartRoundScreen({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        {/* Ingen top-edge → inget extra top-inset */}
         <SafeAreaView style={{ flex: 1 }} edges={[]}>
           <ScrollView
             ref={scrollRef}
@@ -96,7 +95,6 @@ export default function StartRoundScreen({ navigation }) {
             keyboardShouldPersistTaps="handled"
             contentInsetAdjustmentBehavior="never"
           >
-            {/* Logga + Titel */}
             <FadeInSlide delay={0} fromY={-10}>
               <Logo height={160} maxWidthPct={0.44} style={{ marginTop: 40, marginBottom: 6 }} />
               <Text style={styles.screenTitle}>Start a new round</Text>
@@ -203,7 +201,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 0,    // tryck upp allt
+    paddingTop: 0, 
     gap: 16,
   },
   screenTitle: {

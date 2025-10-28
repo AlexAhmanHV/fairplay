@@ -129,7 +129,6 @@ export default function HomeScreen() {
     setDraft(null);
   }, [draft]);
 
-  // logo-only header; we place Resume + Start below it
   const headerProps = useMemo(
     () => ({
       variant: "compact",
@@ -155,7 +154,7 @@ export default function HomeScreen() {
               onPress={handleResume}
               rightIcon="close"
               onRightPress={handleDiscard}
-              style={{ marginBottom: 16 }}   // extra spacing below the button
+              style={{ marginBottom: 16 }}  
               accessibilityLabel={`Resume round at ${draft.courseName ?? "Course"}, hole ${(draft.holeIndex ?? draft.currentIndex ?? 0) + 1}`}
             />
           </FadeInSlide>
@@ -211,7 +210,6 @@ const styles = StyleSheet.create({
   listSection: {
     width: "100%",
     marginTop: 8,
-    // (intentionally no flex: 1)
   },
 
   loadingRow: {

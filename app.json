@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "FairPlay använder din plats för att hämta aktuellt väder när du startar en runda."
+        "NSLocationWhenInUseUsageDescription": "FairPlay uses your location to provide weather."
       }
     },
 

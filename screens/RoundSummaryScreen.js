@@ -70,7 +70,7 @@ export default function RoundSummaryScreen({ route, navigation }) {
   const weatherLine = hasWeather ? formatWeatherLine(data.weather) : null;
 
   // Handlers
-  // ✅ Jump directly to PreviousRounds screen (route name must match your navigator)
+  // ✅ Jump directly to PreviousRounds screen
   const handleGoToPreviousRounds = useCallback(() => {
     navigation.navigate("PreviousRounds");
   }, [navigation]);
@@ -117,7 +117,6 @@ export default function RoundSummaryScreen({ route, navigation }) {
   // Normal UI
   return (
     <ScreenGradient>
-      {/* Keep safe area on sides/bottom, not top */}
       <SafeAreaView style={styles.screen} edges={["left", "right", "bottom"]}>
         <ScrollView
           contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 16 }]}
@@ -233,7 +232,7 @@ const styles = StyleSheet.create({
   errorBannerWrap: { width: "88%", marginTop: 12 },
   errorCta: { marginTop: 6 },
 
-  // Header
+
   title: {
     textAlign: "center",
     color: GREEN_TEXT_DARK,
@@ -243,7 +242,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 
-  // Intro
+
   introWrap: {
     paddingHorizontal: 20,
     marginTop: 10,
@@ -269,14 +268,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // Stats
   statsWrap: {
     paddingHorizontal: 20,
     marginTop: 24,
     gap: 10,
   },
 
-  // CTA
   ctaWrap: {
     paddingHorizontal: 20,
     marginTop: 8,

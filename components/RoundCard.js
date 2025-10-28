@@ -11,7 +11,7 @@ import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
  * @typedef {Object} RoundCardProps
  * @property {string} [course]  - Banförkortning/namn
  * @property {string} [date]    - Datumsträng
- * @property {import('react-native').StyleProp<import('react-native').ViewStyle>} [style] - Valfri extra stil
+ * @property {import('react-native').StyleProp<import('react-native').ViewStyle>} [style]
  */
 
 /**

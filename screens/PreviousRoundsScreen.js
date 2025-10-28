@@ -17,13 +17,13 @@ import FadeInSlide from "../components/FadeInSlide";
 import LoadingView from "../components/LoadingView";
 import LogoHeader from "../components/LogoHeader";
 import PrimaryButton from "../components/PrimaryButton";
-import RoundListItem from "../components/RoundListItem"; // ✅ use the extracted component
+import RoundListItem from "../components/RoundListItem";
 import ScreenGradient from "../components/ScreenGradient";
 
 import { deleteRound, getRounds } from "../db/rounds";
 import { GREEN_PRIMARY, GREEN_TEXT_DARK } from "../theme/colors";
 
-/** Formatter for ISO date → visible date. Expand later if needed. */
+/** Formatter for ISO date → visible date. */
 function formatDate(iso) {
   return iso ?? "";
 }
@@ -63,7 +63,7 @@ export default function PreviousRoundsScreen({ navigation }) {
   /** Reload when screen gains focus (e.g., returning from another screen). */
   useEffect(() => {
     const unsub = navigation.addListener("focus", () => {
-      setNavigatingId(null); // stop any spinner when we come back
+      setNavigatingId(null);
       loadRounds();
     });
     loadRounds();
@@ -123,7 +123,7 @@ export default function PreviousRoundsScreen({ navigation }) {
             isDeleting={isDeleting}
             isNavigating={isNavigating}
             onOpen={() => {
-              if (isNavigating) return; // ignore double taps
+              if (isNavigating) return; 
               setNavigatingId(item.id); // show spinner
               navigation.navigate("RoundSummary", { id: item.id });
             }}

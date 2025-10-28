@@ -42,7 +42,7 @@ export default function RoundScreen({ route, navigation }) {
     endRound,
   } = useRound();
 
-  // Start a round if none exists (e.g., deep-link or cold start).
+  // Start a round if none exists
   useEffect(() => {
     if (!current) startRound(holesCount);
   }, [current, holesCount, startRound]);
@@ -91,11 +91,11 @@ export default function RoundScreen({ route, navigation }) {
   // Spacing tuned by mode (more air when stats are off)
   const spacing = useMemo(
     () => ({
-      cardsGap: isStatsMode ? 10 : 16,         // space between cards
-      afterShotsCard: isStatsMode ? 10 : 24,   // space below the shots card
-      beforeNav: isStatsMode ? 16 : 20,        // space before nav bar
-      beforeFinish: isStatsMode ? 12 : 20,     // space before FinishBar
-      stepperMB: isStatsMode ? 8 : 14,         // extra slack below steppers if needed
+      cardsGap: isStatsMode ? 10 : 16,         
+      afterShotsCard: isStatsMode ? 10 : 24,   
+      beforeNav: isStatsMode ? 16 : 20,       
+      beforeFinish: isStatsMode ? 12 : 20,     
+      stepperMB: isStatsMode ? 8 : 14,       
     }),
     [isStatsMode]
   );
@@ -280,6 +280,5 @@ const styles = StyleSheet.create({
   cards: {
     paddingHorizontal: 20,
     marginTop: 16,
-    // gap injected dynamically
   },
 });

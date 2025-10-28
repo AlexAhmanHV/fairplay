@@ -16,9 +16,9 @@ export default function ScoreStepper({
 }) {
   const isSm = size === "sm";
 
-  const btnSize = isSm ? 34 : 44; // yttre knapp
-  const iconSize = isSm ? 16 : 22; // ikonstorlek
-  const fontSize = isSm ? 18 : 22; // siffror
+  const btnSize = isSm ? 34 : 44; 
+  const iconSize = isSm ? 16 : 22; 
+  const fontSize = isSm ? 18 : 22; 
   const gap = isSm ? 10 : 14;
 
   const dec = () => onChange?.(Math.max(min, (value ?? 0) - step));

@@ -67,8 +67,7 @@ export async function initDb() {
 /* ========== "Resume round" – draft helpers (single draft) ==========
 
 We store exactly one draft under key = 'last'.
-If you later want multiple drafts, we can switch to key = roundId
-and keep a pointer row elsewhere. For now, this keeps the API simple:
+For now, this keeps the API simple:
 
 - dbSaveActiveRound(snapshot)
 - dbLoadActiveRound()

@@ -1,9 +1,14 @@
 // storage/activeRound.js
-// SQLite-backed draft storage (Expo: expo-sqlite)
+//
+// SQLite-backed snapshot storage for the *currently active round* (offline-first).
+// Persists a single JSON “last” record in table `active_rounds` (created idempotently).
+// Uses expo-sqlite via a tiny Promise wrapper (execAsync); each call runs inside a transaction.
+// No schema migrations here—bump the embedded `version` in the payload if your snapshot shape changes.
+// Designed to be fast, resilient, and non-blocking; failures never corrupt partial data.
 
 import * as SQLite from "expo-sqlite";
 
-// Use your existing DB file name if you have one
+// Use the existing DB file name if you have one
 const db = SQLite.openDatabase("app.db");
 
 // Tiny promise wrapper for executeSql
@@ -36,8 +41,6 @@ async function ensureTable() {
 
 /**
  * Save/overwrite the currently active round snapshot.
- * We keep one row keyed as 'last'. If you want multiple drafts later,
- * switch 'key' to snap.roundId and add a separate pointer row.
  */
 export async function saveActiveRound(snap) {
   await ensureTable();

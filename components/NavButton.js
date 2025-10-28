@@ -9,14 +9,14 @@ export default function NavButton({
   title,
   onPress,
   icon,
-  iconPosition = "left", // "left" | "right"
-  variant = "primary",   // "primary" | "secondary"
+  iconPosition = "left", 
+  variant = "primary",   
   disabled = false,
   style,
-  textColor,             // ⟵ NEW: override text color
-  textStyle,             // ⟵ NEW: extra text styling, applied last
+  textColor,           
+  textStyle,             
 }) {
-  // Base (secondary-like) defaults
+  
   let bg = "#FFFFFF";
   let border = "#E6E6E6";
   let computedTextColor = GREEN_TEXT_DARK;
@@ -24,7 +24,6 @@ export default function NavButton({
   if (variant === "primary") {
     bg = GREEN_PRIMARY;
     border = GREEN_PRIMARY;
-    // Default to your dark green unless caller overrides
     computedTextColor = textColor ?? GREEN_TEXT_DARK;
   } else if (variant === "secondary") {
     bg = "#FFFFFF";

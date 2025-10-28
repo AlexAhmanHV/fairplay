@@ -12,18 +12,18 @@ import PrimaryButton from "./PrimaryButton";
 
 export default function LogoHeader({
   onStart,
-  variant = "home",       // "home" | "compact"
+  variant = "home",       
   style,
-  cta,                    // valfri egen CTA (node). Om satt, ersätter knappen.
+  cta,                    
   topPadding,
   logoHeight,
   maxWidthPct,
   gap,
-  showButton,             // valfri hård override (true/false)
+  showButton,            
 }) {
   const { width } = useWindowDimensions();
 
-  // default-konfig per variant
+  
   const presets = {
     home:    { gap: 28, paddingTop: 140, logoH: 120, pct: 0.8, defaultShowBtn: true },
     compact: { gap: 12, paddingTop: 16,  logoH: 56,  pct: 0.5, defaultShowBtn: false },
@@ -35,7 +35,7 @@ export default function LogoHeader({
   const resolvedLogoH      = logoHeight ?? cfg.logoH;
   const resolvedPct        = maxWidthPct ?? cfg.pct;
 
-  // Visa knapp? (1) explicit showButton prop vinner, annars (2) cta finns, annars (3) preset + onStart
+
   const shouldShowButton =
     typeof showButton === "boolean"
       ? showButton
@@ -75,7 +75,7 @@ export default function LogoHeader({
 }
 
 LogoHeader.propTypes = {
-  onStart: PropTypes.func, // bara nödvändig om du vill visa default-knappen
+  onStart: PropTypes.func,
   variant: PropTypes.oneOf(["home", "compact"]),
   style: PropTypes.any,
   cta: PropTypes.node,

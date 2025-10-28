@@ -8,7 +8,7 @@ import { Image, useWindowDimensions } from "react-native";
 
 export default function Logo({
   height = 56,
-  maxWidthPct = 0.5,   // 50% av skärmbredd
+  maxWidthPct = 0.5,  
   style,
   source = require("../assets/logo.png"),
 }) {

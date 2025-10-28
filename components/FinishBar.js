@@ -29,8 +29,8 @@ const styles = StyleSheet.create({
   },
   total: {
     textAlign: "center",
-    color: "#000000",       // 👈 black text
-    fontWeight: "700",      // 👈 bold for emphasis
+    color: "#000000",       
+    fontWeight: "700",      
     marginTop: 8,
   },
 });
